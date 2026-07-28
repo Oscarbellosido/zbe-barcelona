@@ -149,6 +149,7 @@
       <div class="disclaimer" style="margin-top:12px">
         <p><b>Perímetre de la ZBE:</b> font oficial, Àrea Metropolitana de Barcelona (IDEAMB), servei <code>zona_baixes_emissions</code>. Fiable i actualitzat.</p>
         <p><b>Punts de càmera (taronja):</b> ni l'Ajuntament ni l'AMB publiquen les coordenades exactes de les càmeres. Els 131 punts venen d'un mapa comunitari de Google My Maps mantingut per <a href="https://zbe-barcelona.com/faqs/mapa-camaras-zbe/" target="_blank">zbe-barcelona.com</a> — vegeu <code>build-cameras.js</code>. <b>No és una llista oficial</b>: pot faltar-hi algun punt, estar desplaçat respecte al pal exacte, o haver canviat. El que sí és fiable és si la ruta <b>entra dins el perímetre</b>, perquè la detecció real funciona en qualsevol punt d'accés o interior.</p>
+        <p><b>Ruta alternativa per evitar càmeres:</b> si OSRM ofereix alguna alternativa raonable, es tria la que passi a prop de menys càmeres conegudes (i s'avisa amb 🔀). No està garantit: si totes les alternatives passen per càmeres, o no n'hi ha cap de disponible, es manté la ruta habitual amb l'avís de càmeres properes.</p>
         <p>Rutes amb <a href="https://project-osrm.org/" target="_blank">OSRM</a> (servidor públic de demo) sobre dades d'OpenStreetMap. Geocodificació amb <a href="https://nominatim.org/" target="_blank">Nominatim</a>. El botó 📍 de geolocalització només funciona servit per HTTPS o des de <code>localhost</code>.</p>
       </div>
     </details>
@@ -1139,15 +1140,38 @@ async function geocode(query) {
   return { lat: parseFloat(best.lat), lon: parseFloat(best.lon), label: best.display_name, exact };
 }
 
+// Demanem alternatives a OSRM perquè, si n'hi ha, puguem triar la que passi
+// a prop de menys càmeres conegudes en lloc de la primera per defecte.
 async function route(a, b) {
-  const url = `https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson`;
+  const url = `https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson&alternatives=true`;
   const res = await fetch(url);
   const data = await res.json();
   if (data.code !== 'Ok') throw new Error('No s\'ha pogut calcular la ruta');
-  return data.routes[0].geometry; // GeoJSON LineString
+  return data.routes; // array de {geometry, distance, duration, ...}, ordenat per recomanació d'OSRM
 }
 
-function checkRoute(routeGeom) {
+function nearCamerasFor(routeGeom) {
+  const routeLine = turf.feature(routeGeom);
+  return cameras.filter(c => {
+    const d = turf.pointToLineDistance(turf.point([c.lon, c.lat]), routeLine, { units: 'meters' });
+    return d <= 40;
+  });
+}
+
+// D'entre totes les rutes que ha tornat OSRM (la recomanada + alternatives,
+// si n'hi ha), tria la que passi a prop de menys càmeres conegudes. Si totes
+// en tenen les mateixes (o no hi ha alternatives), es queda amb la primera.
+function pickRouteAvoidingCameras(routes) {
+  const evaluated = routes.map((r) => ({ geometry: r.geometry, nearCameras: nearCamerasFor(r.geometry) }));
+  const primary = evaluated[0];
+  let chosen = primary;
+  for (const r of evaluated.slice(1)) {
+    if (r.nearCameras.length < chosen.nearCameras.length) chosen = r;
+  }
+  return { chosen, avoidedCount: primary.nearCameras.length - chosen.nearCameras.length, usedAlternative: chosen !== primary };
+}
+
+function checkRoute(routeGeom, nearCameras) {
   const routeLine = turf.feature(routeGeom);
   const coords = routeGeom.coordinates;
   const startInside = turf.booleanPointInPolygon(turf.point(coords[0]), zbePolygon);
@@ -1162,11 +1186,6 @@ function checkRoute(routeGeom) {
       crossings = turf.lineIntersect(routeLine, polyLine).features.length;
     } catch (e) { /* ignore, keep crossings 0 */ }
   }
-
-  const nearCameras = cameras.filter(c => {
-    const d = turf.pointToLineDistance(turf.point([c.lon, c.lat]), routeLine, { units: 'meters' });
-    return d <= 40;
-  });
 
   return { intersects, crossings, startInside, endInside, nearCameras };
 }
@@ -1266,7 +1285,9 @@ calcBtn.addEventListener('click', async () => {
     ]);
 
     setStatus('Calculant ruta...');
-    const geom = await route(a, b);
+    const routes = await route(a, b);
+    const { chosen, avoidedCount, usedAlternative } = pickRouteAvoidingCameras(routes);
+    const geom = chosen.geometry;
 
     if (routeLayer) map.removeLayer(routeLayer);
     routeLayer = L.geoJSON(geom, { style: { color: '#1a73e8', weight: 5, opacity: 0.85 } }).addTo(map);
@@ -1275,7 +1296,7 @@ calcBtn.addEventListener('click', async () => {
     map.fitBounds(routeLayer.getBounds(), { padding: [40, 40], maxZoom: 15 });
     cameraLayerGroup.eachLayer((l) => l.bringToFront());
 
-    const result = checkRoute(geom);
+    const result = checkRoute(geom, chosen.nearCameras);
     renderResult(result);
     let msg = `Origen: ${a.label.split(',')[0]} → Destí: ${b.label.split(',')[0]}`;
     if (a.exact === false && b.exact === false) {
@@ -1284,6 +1305,10 @@ calcBtn.addEventListener('click', async () => {
       msg += ' ⚠ OpenStreetMap no té el número exacte per a l\'origen: el punt marca només el carrer.';
     } else if (b.exact === false) {
       msg += ' ⚠ OpenStreetMap no té el número exacte per al destí: el punt marca només el carrer.';
+    }
+    if (usedAlternative && avoidedCount > 0) {
+      const camWord = avoidedCount === 1 ? 'càmera coneguda' : 'càmeres conegudes';
+      msg += ` 🔀 S'ha triat una ruta alternativa per evitar ${avoidedCount} ${camWord}.`;
     }
     setStatus(msg);
   } catch (err) {
