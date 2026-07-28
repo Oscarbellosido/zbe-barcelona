@@ -3,8 +3,13 @@
 // Tot el que no sigui d'aquesta llista (Nominatim, OSRM, tiles de mapa,
 // Leaflet/Turf per CDN) es deixa passar directament a la xarxa, sense
 // interceptar-ho, perquè les rutes i adreces sempre siguin en directe.
+//
+// Estratègia "network-first": sempre intenta la xarxa abans que la caché,
+// perquè les actualitzacions de ZBE_CRE.html es vegin de seguida; la caché
+// només s'usa com a reserva quan no hi ha connexió. Puja CACHE_NAME (v2, v3...)
+// si mai cal forçar que tothom refresqui la caché de cop.
 
-const CACHE_NAME = 'zbe-cre-v1';
+const CACHE_NAME = 'zbe-cre-v2';
 const APP_SHELL = [
   './ZBE_CRE.html',
   './manifest.json',
@@ -32,5 +37,13 @@ self.addEventListener('fetch', (event) => {
   const isAppShell = url.origin === self.location.origin &&
     APP_SHELL.some((p) => url.pathname.endsWith(p.replace('./', '/')));
   if (!isAppShell) return;
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
+  event.respondWith(
+    fetch(event.request)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        return res;
+      })
+      .catch(() => caches.match(event.request))
+  );
 });
