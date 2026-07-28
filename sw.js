@@ -9,7 +9,7 @@
 // només s'usa com a reserva quan no hi ha connexió. Puja CACHE_NAME (v2, v3...)
 // si mai cal forçar que tothom refresqui la caché de cop.
 
-const CACHE_NAME = 'zbe-cre-v2';
+const CACHE_NAME = 'zbe-cre-v3';
 const APP_SHELL = [
   './ZBE_CRE.html',
   './manifest.json',
@@ -37,8 +37,12 @@ self.addEventListener('fetch', (event) => {
   const isAppShell = url.origin === self.location.origin &&
     APP_SHELL.some((p) => url.pathname.endsWith(p.replace('./', '/')));
   if (!isAppShell) return;
+  // GitHub Pages envia Cache-Control: max-age=600, així que un fetch normal
+  // pot tornar una còpia de la memòria cau HTTP del navegador encara que
+  // aquí forcem "xarxa primer". { cache: 'reload' } salta aquesta memòria
+  // cau i sempre valida contra el servidor.
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: 'reload' })
       .then((res) => {
         const copy = res.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
