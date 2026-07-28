@@ -1,0 +1,793 @@
+{
+  "_avis": "Llista NO oficial. Cap font oficial (Ajuntament/AMB) publica coordenades de càmeres ZBE. Aquests punts venen d'un mapa comunitari (zbe-barcelona.com, Google My Maps) — poden estar desactualitzats, incomplets o no correspondre exactament a la ubicació real del pal de la càmera.",
+  "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial",
+  "generat": "2026-07-28",
+  "cameres": [
+    {
+      "name": "Avinguda Meridiana, 605",
+      "lat": 41.4495813,
+      "lon": 2.1884312,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Avinguda Meridiana, 694",
+      "lat": 41.4490594,
+      "lon": 2.1885259,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Gran Via de les Corts Catalanes, 186",
+      "lat": 41.3675257,
+      "lon": 2.1396152,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Gran Via de les Corts Catalanes, 181",
+      "lat": 41.3680662,
+      "lon": 2.1394188,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Via Augusta, 323",
+      "lat": 41.3995582,
+      "lon": 2.1236962,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Via Augusta, 324",
+      "lat": 41.3991809,
+      "lon": 2.1250322,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Avinguda Diagonal, 687",
+      "lat": 41.3827943,
+      "lon": 2.1068387,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Avinguda Diagonal, 712",
+      "lat": 41.3832306,
+      "lon": 2.10673,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Avinguda Diagonal, 716",
+      "lat": 41.3832306,
+      "lon": 2.10673,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Av. de Pedralbes, 51",
+      "lat": 41.3932581,
+      "lon": 2.114556,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Passeig de Fabra i Puig, 181",
+      "lat": 41.4301467,
+      "lon": 2.1775149,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Passeig de Fabra i Puig, 222",
+      "lat": 41.4303972,
+      "lon": 2.1775254,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Gran Via de les Corts Catalanes, 794",
+      "lat": 41.3998896,
+      "lon": 2.1823072,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Gran Via de les Corts Catalanes, 747",
+      "lat": 41.3987828,
+      "lon": 2.1804894,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Avinguda Diagonal, 203",
+      "lat": 41.4039915,
+      "lon": 2.1904271,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Avinguda Diagonal, 242",
+      "lat": 41.4043596,
+      "lon": 2.1905139,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Carrer de Numància, 47",
+      "lat": 41.3835763,
+      "lon": 2.1386476,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Carrer de Berlín, 34",
+      "lat": 41.3830253,
+      "lon": 2.1387515,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Passeig Josep Carner, 27",
+      "lat": 41.3745918,
+      "lon": 2.1768892,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Av. del Paral·lel, 2",
+      "lat": 41.3744459,
+      "lon": 2.1759067,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Ronda del General Mitre, 82",
+      "lat": 41.3986247,
+      "lon": 2.1337446,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Ronda del General Mitre, 93",
+      "lat": 41.3997255,
+      "lon": 2.1341491,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Carrer de Ganduxer, 88",
+      "lat": 41.3989933,
+      "lon": 2.1344445,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Carrer de Ganduxer, 90",
+      "lat": 41.3990083,
+      "lon": 2.1343405,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Plaça del Taxi",
+      "lat": 41.4171009,
+      "lon": 2.180382,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Passeig de Maragall, 54",
+      "lat": 41.4163038,
+      "lon": 2.1804207,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "C/ d'Aragó, 185",
+      "lat": 41.3875363,
+      "lon": 2.1586857,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Gran Via de les Corts Catalanes, 601",
+      "lat": 41.389263,
+      "lon": 2.1678127,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Gran Via de les Corts Catalanes, 622",
+      "lat": 41.3890564,
+      "lon": 2.1681271,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Carrer Gran de Gràcia, 249",
+      "lat": 41.405711,
+      "lon": 2.1504856,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Avinguda de la Riera de Cassoles, 67",
+      "lat": 41.4056371,
+      "lon": 2.1499339,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Carrer de la Marina, 201",
+      "lat": 41.4007872,
+      "lon": 2.1790138,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Av. del Paral·lel, 184",
+      "lat": 41.3750674,
+      "lon": 2.1534741,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Av. del Paral·lel, 185",
+      "lat": 41.3748103,
+      "lon": 2.1538744,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Via Laietana, 41",
+      "lat": 41.386332,
+      "lon": 2.1754981,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Via Laietana, 46",
+      "lat": 41.3863885,
+      "lon": 2.175619,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Carrer de las Navas de Tolosa, 355",
+      "lat": 41.4181139,
+      "lon": 2.1831434,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Carrer de Concepción Arenal, 1",
+      "lat": 41.4184287,
+      "lon": 2.1836979,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Carrer de Sant Antoni Maria Claret, 412",
+      "lat": 41.4182799,
+      "lon": 2.1839002,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Passeig de la Vall d'Hebron, 119",
+      "lat": 41.4275738,
+      "lon": 2.1433849,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Passeig de la Vall d'Hebron, 160",
+      "lat": 41.4274626,
+      "lon": 2.1438665,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "La Catalana - Salida 26",
+      "lat": 41.4218697,
+      "lon": 2.2214166,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Hospitalet ZBE",
+      "lat": 41.3767244,
+      "lon": 2.0959721,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Salida 26",
+      "lat": 41.4183134,
+      "lon": 2.2248913,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Salida 25",
+      "lat": 41.4149774,
+      "lon": 2.2254688,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Salida15",
+      "lat": 41.3537466,
+      "lon": 2.0922824,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Salida 5",
+      "lat": 41.4314821,
+      "lon": 2.1452574,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Avinguda America",
+      "lat": 41.3495701,
+      "lon": 2.1146726,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Parc de la Solidaritat Esplugues ZBE",
+      "lat": 41.3723901,
+      "lon": 2.0941238,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Sant Mateu",
+      "lat": 41.3780966,
+      "lon": 2.0975749,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Salida 12",
+      "lat": 41.3738518,
+      "lon": 2.0946411,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Salida 13",
+      "lat": 41.3695037,
+      "lon": 2.0937439,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "AV. Electricitat esq Pere Pelegrí ZBE",
+      "lat": 41.368594,
+      "lon": 2.0992682,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Trav. Industrial - Av Europa ZBE",
+      "lat": 41.3573601,
+      "lon": 2.1129426,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Calle Mas, 61",
+      "lat": 41.3722417,
+      "lon": 2.1210136,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Santa Eulalia",
+      "lat": 41.3682798,
+      "lon": 2.1314439,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Creu Roja - Carretera Collblanc",
+      "lat": 41.3758092,
+      "lon": 2.1157718,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Hospitalet",
+      "lat": 41.3587868,
+      "lon": 2.1142607,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Josep Tarradellas 260",
+      "lat": 41.3618356,
+      "lon": 2.0938234,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Av. Joan Carles I, 40",
+      "lat": 41.3498952,
+      "lon": 2.1325015,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "P. Santa Coloma ZBE 2023 Activo",
+      "lat": 41.4486725,
+      "lon": 2.2003466,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Potosí ZBE Nueva 2023",
+      "lat": 41.4434833,
+      "lon": 2.2053911,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (1/36)",
+      "lat": 41.434152,
+      "lon": 2.2076501,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Av Vallcarca",
+      "lat": 41.4109384,
+      "lon": 2.1462097,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Segre",
+      "lat": 41.4341679,
+      "lon": 2.1922388,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Mallorca - Villaroel",
+      "lat": 41.3866307,
+      "lon": 2.1529769,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Balmes - Eda Universidad 2024",
+      "lat": 41.3866932,
+      "lon": 2.1661405,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Travessera / Vallespir",
+      "lat": 41.3855875,
+      "lon": 2.1330431,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Crta Hospitalet / C/ Energia ZBE",
+      "lat": 41.3581252,
+      "lon": 2.092409,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Av. Meridiana, 611",
+      "lat": 41.4502418,
+      "lon": 2.1885802,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Pz. Europa 5",
+      "lat": 41.3560511,
+      "lon": 2.1245554,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "C / Energía",
+      "lat": 41.357781,
+      "lon": 2.0922364,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Gran Via 151",
+      "lat": 41.3526271,
+      "lon": 2.1196229,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Gran Via 153",
+      "lat": 41.3520969,
+      "lon": 2.1192356,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Miguel Hernandez 95",
+      "lat": 41.3521357,
+      "lon": 2.1195814,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Vall d´Hebron 245",
+      "lat": 41.4396603,
+      "lon": 2.1581141,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Salvador Espriu 64",
+      "lat": 41.3540331,
+      "lon": 2.1222003,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Can Trias 4",
+      "lat": 41.3548133,
+      "lon": 2.1216088,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Calle 2",
+      "lat": 41.3444259,
+      "lon": 2.1353509,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Av Parc Logistic",
+      "lat": 41.3442084,
+      "lon": 2.135013,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Diagonal",
+      "lat": 41.3878431,
+      "lon": 2.1258349,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Ronda Universidad 2024",
+      "lat": 41.3865996,
+      "lon": 2.1665392,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Josep Carner 38 ZBE Dir. Montjuic",
+      "lat": 41.3731942,
+      "lon": 2.1755199,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Ctra. Esplugues 14",
+      "lat": 41.3657664,
+      "lon": 2.0969816,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Carretera del Mig / Arquímedes ZBE",
+      "lat": 41.3496935,
+      "lon": 2.0951964,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Potosí",
+      "lat": 41.4434155,
+      "lon": 2.2054037,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Rambla de Badal, 1",
+      "lat": 41.3651965,
+      "lon": 2.1350032,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Balmes / Travessera",
+      "lat": 41.39772,
+      "lon": 2.1517615,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Rambla de Badal, 1(2)",
+      "lat": 41.3653075,
+      "lon": 2.135434,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Segre / C Sant Adrià (1/2)",
+      "lat": 41.4338491,
+      "lon": 2.1922903,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Gran Via / C Física",
+      "lat": 41.3582091,
+      "lon": 2.1272148,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Segre / C Sant Adrià (2/2)",
+      "lat": 41.4339838,
+      "lon": 2.1924324,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (2/36)",
+      "lat": 41.3847245,
+      "lon": 2.127303,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (3/36)",
+      "lat": 41.3957436,
+      "lon": 2.1340015,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (4/36)",
+      "lat": 41.384311,
+      "lon": 2.1038586,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (5/36)",
+      "lat": 41.408974,
+      "lon": 2.1113452,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (6/36)",
+      "lat": 41.4221391,
+      "lon": 2.138418,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (7/36)",
+      "lat": 41.3879532,
+      "lon": 2.1257852,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (8/36)",
+      "lat": 41.4153182,
+      "lon": 2.1868958,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (9/36)",
+      "lat": 41.4254997,
+      "lon": 2.1762672,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (10/36)",
+      "lat": 41.3960334,
+      "lon": 2.1538702,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (11/36)",
+      "lat": 41.4095641,
+      "lon": 2.1652138,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (12/36)",
+      "lat": 41.4395636,
+      "lon": 2.156873,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (13/36)",
+      "lat": 41.4006373,
+      "lon": 2.1970957,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (14/36)",
+      "lat": 41.405992,
+      "lon": 2.1855797,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (15/36)",
+      "lat": 41.3958717,
+      "lon": 2.1495033,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (16/36)",
+      "lat": 41.3992344,
+      "lon": 2.1630081,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (17/36)",
+      "lat": 41.4000908,
+      "lon": 2.1664041,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (18/36)",
+      "lat": 41.4103905,
+      "lon": 2.1869109,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (19/36)",
+      "lat": 41.3932724,
+      "lon": 2.1664344,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (20/36)",
+      "lat": 41.4076739,
+      "lon": 2.1480886,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (21/36)",
+      "lat": 41.4080807,
+      "lon": 2.1511252,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (22/36)",
+      "lat": 41.3882222,
+      "lon": 2.1397289,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (23/36)",
+      "lat": 41.4000528,
+      "lon": 2.1732028,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (24/36)",
+      "lat": 41.3985468,
+      "lon": 2.1531838,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (25/36)",
+      "lat": 41.4127932,
+      "lon": 2.1672796,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (26/36)",
+      "lat": 41.3814227,
+      "lon": 2.1821458,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (27/36)",
+      "lat": 41.3830479,
+      "lon": 2.1837225,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (28/36)",
+      "lat": 41.3794339,
+      "lon": 2.1621576,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (29/36)",
+      "lat": 41.4088673,
+      "lon": 2.2022707,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (30/36)",
+      "lat": 41.4067613,
+      "lon": 2.1337517,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (31/36)",
+      "lat": 41.4061439,
+      "lon": 2.1336738,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (32/36)",
+      "lat": 41.3758714,
+      "lon": 2.1180076,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (33/36)",
+      "lat": 41.3757049,
+      "lon": 2.121776,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (34/36)",
+      "lat": 41.3756711,
+      "lon": 2.1232763,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (35/36)",
+      "lat": 41.3892279,
+      "lon": 2.1837512,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE 2023 (36/36)",
+      "lat": 41.3809062,
+      "lon": 2.1819854,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE Badalona (1/3)",
+      "lat": 41.4574788,
+      "lon": 2.2277485,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE Badalona (2/3)",
+      "lat": 41.4567083,
+      "lon": 2.2231343,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "ZBE Badalona (3/3)",
+      "lat": 41.4535651,
+      "lon": 2.2275655,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    },
+    {
+      "name": "Carrer Molí",
+      "lat": 41.3754315,
+      "lon": 2.0956195,
+      "font": "Mapa comunitari \"Cámaras ZBE Barcelona\" (zbe-barcelona.com, Google My Maps) — no oficial"
+    }
+  ]
+}

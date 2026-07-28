@@ -1,0 +1,16 @@
+{
+  "name": "Ruta ZBE Barcelona (CRE)",
+  "short_name": "ZBE CRE",
+  "description": "Comprova si una ruta creua la Zona de Baixes Emissions de Barcelona i si passa a prop de càmeres conegudes.",
+  "start_url": "./ZBE_CRE.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1b1f24",
+  "theme_color": "#1b1f24",
+  "lang": "ca",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
