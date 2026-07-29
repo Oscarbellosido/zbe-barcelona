@@ -1084,11 +1084,12 @@ refreshCamerasBtn.addEventListener('click', async () => {
   }
 });
 
-// Requadre de l'àrea metropolitana de Barcelona: evita que una cerca com
-// "Plaça Catalunya" acabi trobant una plaça amb el mateix nom a Manresa o a
-// La Llagosta (dins la mateixa província) en lloc de la de Barcelona ciutat.
+// Requadre de l'àrea metropolitana de Barcelona: es fa servir per acotar UNA
+// de les dues cerques (vegeu geocode), per desempatar noms que es repeteixen
+// a diversos municipis (com "Plaça Catalunya" a Barcelona i a la Llagosta).
+// L'altra cerca es fa SENSE acotar, perquè adreces genuïnament de fora de
+// l'àrea metropolitana (p.ex. "Taradell") també es puguin trobar.
 const BCN_METRO_VIEWBOX = '1.95,41.55,2.30,41.28'; // left,top,right,bottom
-const BCN_CENTER = turf.point([2.1686, 41.3874]);
 
 // Molts noms de plaça/carrer en català porten "de"/"d'" ("Plaça de Catalunya",
 // "Carrer d'Aragó") que la gent sovint no escriu ("Plaça Catalunya"). Nominatim
@@ -1099,8 +1100,9 @@ function buildDeVariant(q) {
   return m ? `${m[1]} de ${m[2]}` : null;
 }
 
-async function nominatimSearch(q) {
-  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&viewbox=${BCN_METRO_VIEWBOX}&bounded=1&q=${encodeURIComponent(q)}`;
+async function nominatimSearch(q, bounded) {
+  const boundedParams = bounded ? `&viewbox=${BCN_METRO_VIEWBOX}&bounded=1` : '';
+  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6${boundedParams}&q=${encodeURIComponent(q)}`;
   const res = await fetch(url, { headers: { 'Accept-Language': 'ca,es' } });
   return res.json();
 }
@@ -1114,21 +1116,27 @@ function extractHouseNumber(q) {
 async function geocode(query) {
   const variant = buildDeVariant(query);
   const queries = variant ? [query, variant] : [query];
-  const results = await Promise.all(queries.map(nominatimSearch));
-  const hits = results.flat();
-  if (!hits.length) throw new Error(`No s'ha trobat dins l'àrea de Barcelona: ${query}`);
-
-  // Preferim resultats que realment són al municipi de Barcelona; si no n'hi
-  // ha (p.ex. l'aeroport, que és a Sant Boi de Llobregat), ens quedem amb el
-  // candidat més proper al centre de Barcelona.
-  const inCity = hits.filter((h) => h.address && h.address.city === 'Barcelona');
-  let pool = inCity.length ? inCity : hits;
+  // Cerca acotada a l'àrea metropolitana (per als casos ambigus dins BCN) i
+  // sense acotar (per a llocs reals fora, com un poble d'una altra comarca)
+  // en paral·lel; després es decideix quin resultat és el bo.
+  const results = await Promise.all([
+    ...queries.map((q) => nominatimSearch(q, true)),
+    ...queries.map((q) => nominatimSearch(q, false)),
+  ]);
+  const seen = new Set();
+  const hits = results.flat().filter((h) => {
+    if (seen.has(h.place_id)) return false;
+    seen.add(h.place_id);
+    return true;
+  });
+  if (!hits.length) throw new Error(`No s'ha trobat: ${query}`);
 
   // Si l'usuari ha escrit un número, OSM no sempre el té enregistrat per a
   // aquell carrer concret (moltes vies no tenen tots els números tallats a
   // OpenStreetMap): en aquest cas Nominatim només retorna el carrer sencer
   // (sovint partit en diversos trams sense relació amb el número real).
   // Marquem el resultat com "no exacte" perquè l'app pugui avisar-ho.
+  let pool = hits;
   let exact = true;
   const houseNumber = extractHouseNumber(query);
   if (houseNumber) {
@@ -1140,11 +1148,17 @@ async function geocode(query) {
     }
   }
 
+  // Puntuació: la rellevància pròpia de Nominatim ("importance"), amb un
+  // petit avantatge si el resultat és realment al municipi de Barcelona.
+  // Això desempata noms repetits en diversos municipis a favor de Barcelona
+  // (p.ex. "Plaça Catalunya"), sense descartar per complet indrets fora de
+  // l'àrea metropolitana amb molta més rellevància (p.ex. "Taradell", un
+  // poble real, davant d'un carrer poc conegut amb el mateix nom a BCN).
   let best = pool[0];
-  let bestDist = Infinity;
+  let bestScore = -Infinity;
   for (const hit of pool) {
-    const d = turf.distance(BCN_CENTER, turf.point([parseFloat(hit.lon), parseFloat(hit.lat)]));
-    if (d < bestDist) { bestDist = d; best = hit; }
+    const score = (parseFloat(hit.importance) || 0) + (hit.address && hit.address.city === 'Barcelona' ? 0.1 : 0);
+    if (score > bestScore) { bestScore = score; best = hit; }
   }
   return { lat: parseFloat(best.lat), lon: parseFloat(best.lon), label: best.display_name, exact };
 }
