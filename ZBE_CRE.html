@@ -129,7 +129,8 @@
         <a href="https://zbe-barcelona.com/faqs/mapa-camaras-zbe/" target="_blank">zbe-barcelona.com</a>
         (cal connexió a internet; només afecta aquesta sessió, no el fitxer).
       </p>
-      <button type="button" id="refreshCamerasBtn" style="margin-bottom:10px">🔄 Actualitza càmeres (en directe)</button>
+      <button type="button" id="refreshCamerasBtn" style="margin-bottom:6px">🔄 Actualitza càmeres (en directe)</button>
+      <div id="cameraStatus" style="font-size:13px; color:#555; min-height:18px; margin-bottom:10px"></div>
       <p class="disclaimer" style="margin:0 0 10px">
         Google no permet que una web injecti punts directament al teu Google Maps.
         Aquest botó descarrega un fitxer KML amb les càmeres carregades; importa'l a
@@ -1065,9 +1066,12 @@ function parseCamerasKml(kml) {
   });
 }
 
+const cameraStatusEl = document.getElementById('cameraStatus');
+function setCameraStatus(msg) { cameraStatusEl.textContent = msg; }
+
 refreshCamerasBtn.addEventListener('click', async () => {
   refreshCamerasBtn.disabled = true;
-  setStatus('Actualitzant càmeres des de zbe-barcelona.com...');
+  setCameraStatus('Actualitzant càmeres des de zbe-barcelona.com...');
   try {
     const res = await fetch(`${CAMERAS_KML_URL}&_=${Date.now()}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1076,9 +1080,9 @@ refreshCamerasBtn.addEventListener('click', async () => {
     if (!points.length) throw new Error('cap punt trobat al mapa');
     cameras = points;
     renderCameras();
-    setStatus(`Càmeres actualitzades: ${cameras.length} punts (${new Date().toLocaleString('ca-ES')}). Només per a aquesta sessió.`);
+    setCameraStatus(`Càmeres actualitzades: ${cameras.length} punts (${new Date().toLocaleString('ca-ES')}). Només per a aquesta sessió.`);
   } catch (e) {
-    setStatus('Error actualitzant les càmeres: ' + e.message + ' (es mantenen les anteriors)');
+    setCameraStatus('Error actualitzant les càmeres: ' + e.message + ' (es mantenen les anteriors)');
   } finally {
     refreshCamerasBtn.disabled = false;
   }
