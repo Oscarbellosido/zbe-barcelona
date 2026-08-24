@@ -1458,9 +1458,15 @@ async function findRouteAvoidingZBE(a, b, fastest, onProgress) {
 // el nombre de punts coneguts a prop.
 const CAM_MAX_ITERACIONS = 3;
 const CAM_DESPLACAMENTS_M = [150, 300, 550];
-const CAM_MAX_FACTOR_VOLTA = 1.8;   // un desviament de càmera ha de ser local
-const CAM_MARGE_ZBE_M = 500;        // no acceptis més ZBE a canvi de menys càmeres
 const CAM_MAX_ENGANXADA_M = 400;
+// Un desviament de càmera ha de ser local, però en trajectes curts un factor
+// sol es queda curt de seguida (1,8 × 2 min = 3,6 min, i dos illes de cases
+// amb semàfors ja s'hi mengen): d'aquí el marge absolut.
+const CAM_MAX_FACTOR_VOLTA = 1.8;
+const CAM_MARGE_TEMPS_S = 300;
+// Un punt de càmera a tocar de l'origen o del destí no es pot esquivar amb un
+// desviament: la ruta hi ha de començar o acabar igualment.
+const CAM_EXTREM_M = 150;
 
 function vecMeters(from, to) {
   const cosLat = Math.cos(((from[1] + to[1]) / 2) * GRAU);
@@ -1494,32 +1500,61 @@ function perpendicularAway(coords, i, cam) {
   return perp;
 }
 
+function cameraAtEndpoint(cam, a, b) {
+  const p = [cam.lon, cam.lat];
+  return metersBetween(p, [a.lon, a.lat]) <= CAM_EXTREM_M
+      || metersBetween(p, [b.lon, b.lat]) <= CAM_EXTREM_M;
+}
+
+// Torna { route, intentat, inevitables }: la ruta millorada (o null si no
+// n'hi ha), si s'ha arribat a provar cap desviament, i els punts de càmera
+// que són a tocar de l'origen o del destí i que per tant no es poden evitar.
 async function findRouteAvoidingCameras(a, b, start, onProgress) {
   let current = start;
+  let intentat = false;
+  const inevitables = [];
+
   for (let iter = 0; iter < CAM_MAX_ITERACIONS; iter++) {
-    if (!current.nearCameras.length) break;
+    // Es prova d'esquivar la càmera més enganxada al traçat que no estigui a
+    // tocar d'un extrem; les dels extrems s'apunten i s'informen a part.
+    const objectiu = current.nearCameras.find((c) => {
+      if (!cameraAtEndpoint(c, a, b)) return true;
+      if (!inevitables.some((x) => x.name === c.name)) inevitables.push(c);
+      return false;
+    });
+    if (!objectiu) break;
+
     const coords = current.geometry.coordinates;
-    const cam = current.nearCameras[0];           // la més enganxada al traçat
-    const camPt = [cam.lon, cam.lat];
+    const camPt = [objectiu.lon, objectiu.lat];
     const i = nearestIndex(coords, camPt);
     const perp = perpendicularAway(coords, i, camPt);
 
-    const vies = CAM_DESPLACAMENTS_M.map((d) => offsetByMeters(coords[i], perp[0] * d, perp[1] * d));
-    // I un al costat contrari, per si en aquella banda no hi ha carrer.
-    vies.push(offsetByMeters(coords[i], -perp[0] * 300, -perp[1] * 300));
+    // Totes dues bandes a cada distància: sovint el carrer paral·lel útil
+    // només existeix en un dels dos costats.
+    const vies = [];
+    for (const d of CAM_DESPLACAMENTS_M) {
+      vies.push(offsetByMeters(coords[i], perp[0] * d, perp[1] * d));
+      vies.push(offsetByMeters(coords[i], -perp[0] * d, -perp[1] * d));
+    }
 
+    intentat = true;
     if (onProgress) onProgress(iter + 1, CAM_MAX_ITERACIONS);
     const results = await Promise.all(vies.map((v) =>
       osrmRoute([a, { lon: v[0], lat: v[1] }, b]).catch(() => null)
     ));
 
+    const maxDurada = Math.max(start.duration * CAM_MAX_FACTOR_VOLTA, start.duration + CAM_MARGE_TEMPS_S);
     let millor = null;
     for (const data of results) {
       if (!data) continue;
       if ((data.waypoints || []).some((w) => w.distance > CAM_MAX_ENGANXADA_M)) continue;
       const r = evaluateRoute(data.routes[0]);
-      if (r.duration > start.duration * CAM_MAX_FACTOR_VOLTA) continue;
-      if (r.zbe.meters > start.zbe.meters + CAM_MARGE_ZBE_M) continue;
+      if (r.duration > maxDurada) continue;
+      // L'única condició sobre la ZBE és no embrutar una ruta que era neta.
+      // Si la ruta ja hi circula per dins, els metres de més que afegeix el
+      // desviament no són cap regressió: el que s'hi guanya és esquivar la
+      // càmera, que és justament el que s'ha demanat.
+      if (start.avoidsZbe && !r.avoidsZbe) continue;
       if (r.nearCameras.length >= current.nearCameras.length) continue;
       const guanya = !millor
         || r.nearCameras.length < millor.nearCameras.length
@@ -1529,7 +1564,8 @@ async function findRouteAvoidingCameras(a, b, start, onProgress) {
     if (!millor) break;
     current = millor;
   }
-  return current === start ? null : current;
+
+  return { route: current === start ? null : current, intentat, inevitables };
 }
 
 // ---------------------------------------------------------------------------
@@ -1559,7 +1595,7 @@ function formatDelta(chosen, fastest) {
   return `${temps} i ${dist} respecte a la ruta ràpida (en gris al mapa)`;
 }
 
-function renderResult({ mode, chosen, fastest, originInside, destInside, camerasAvoided = 0 }) {
+function renderResult({ mode, chosen, fastest, originInside, destInside, camerasAvoided = 0, cameraSearch = { intentat: false, inevitables: [] } }) {
   resultCard.classList.add('ok');
   routeNoteEl.innerHTML = '';
 
@@ -1601,10 +1637,22 @@ function renderResult({ mode, chosen, fastest, originInside, destInside, cameras
     : '';
 
   if (chosen.nearCameras.length) {
+    // Quan en queden, cal dir per què: si s'ha provat d'esquivar-los i no hi
+    // ha hagut manera, o si són a tocar de l'origen o el destí i llavors no
+    // hi ha res a fer. Sense això, un intent fallit i no haver-ho intentat
+    // es veuen exactament igual des de la pantalla.
+    const noms = new Set(cameraSearch.inevitables.map((c) => c.name));
+    const alsExtrems = chosen.nearCameras.filter((c) => noms.has(c.name));
+    let motiu = '';
+    if (alsExtrems.length === chosen.nearCameras.length && alsExtrems.length) {
+      motiu = `<p class="camera-note">${alsExtrems.length === 1 ? 'Aquest punt és' : 'Aquests punts són'} a tocar de l'origen o del destí: la ruta hi ha de començar o acabar igualment, així que cap desviament ho evita.</p>`;
+    } else if (cameraSearch.intentat) {
+      motiu = '<p class="camera-note">S\'han provat desviaments a banda i banda de la ruta i cap evita aquests punts sense allargar el trajecte molt més del compte. Sol passar als accessos i als nusos, que és on es posen les càmeres.</p>';
+    }
     cameraListEl.innerHTML = apartada
       + `<b>Punts de càmera coneguts que queden a prop de la ruta (&le;${CAMERA_RADI_M} m):</b>`
       + `<ul>${chosen.nearCameras.map(c => `<li>${c.name} <span class="camera-dist">a ${Math.round(c.dist)} m</span></li>`).join('')}</ul>`
-      + avis;
+      + motiu + avis;
   } else {
     cameraListEl.innerHTML = apartada
       + `<b>Cap punt de càmera conegut a prop de la ruta.</b>`
@@ -1749,19 +1797,20 @@ calcBtn.addEventListener('click', async () => {
     // Prioritat 3: sobre la ruta ja triada, mirar d'apartar-la dels punts de
     // càmera coneguts. Serveix tant si la ruta entra a la ZBE com si no.
     let camerasAvoided = 0;
+    let cameraSearch = { intentat: false, inevitables: [] };
     if (chosen.nearCameras.length) {
       const abans = chosen.nearCameras.length;
-      const apartada = await findRouteAvoidingCameras(a, b, chosen, (i, t) => {
+      cameraSearch = await findRouteAvoidingCameras(a, b, chosen, (i, t) => {
         setStatus(`Apartant la ruta dels punts de càmera coneguts... (${i}/${t})`);
       });
-      if (apartada) {
-        camerasAvoided = abans - apartada.nearCameras.length;
-        chosen = apartada;
+      if (cameraSearch.route) {
+        camerasAvoided = abans - cameraSearch.route.nearCameras.length;
+        chosen = cameraSearch.route;
       }
     }
 
     drawRoutes(chosen, fastest);
-    renderResult({ mode, chosen, fastest, originInside, destInside, camerasAvoided });
+    renderResult({ mode, chosen, fastest, originInside, destInside, camerasAvoided, cameraSearch });
     setStatus(`Origen: ${shortLabel(a.label)} → Destí: ${shortLabel(b.label)}` + geocodeWarning(a, b));
   } catch (err) {
     setStatus('Error: ' + err.message);
@@ -1780,7 +1829,7 @@ Promise.all([loadZBE(), loadCameras()])
 // sw.js. Es mostra a "Llegenda i dades" perquè, quan una cosa no funciona com
 // s'espera, es pugui saber d'un cop d'ull si el que s'està executant és la
 // versió nova o una còpia guardada del service worker.
-const APP_VERSION = '2026-08-24 · v5';
+const APP_VERSION = '2026-08-24 · v6';
 document.getElementById('appVersion').textContent = APP_VERSION;
 
 // Registre del service worker: només té sentit servit per http(s)/localhost;
