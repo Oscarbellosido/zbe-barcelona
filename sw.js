@@ -9,7 +9,7 @@
 // només s'usa com a reserva quan no hi ha connexió. Puja CACHE_NAME (v2, v3...)
 // si mai cal forçar que tothom refresqui la caché de cop.
 
-const CACHE_NAME = 'zbe-cre-v4';
+const CACHE_NAME = 'zbe-cre-v5';
 const APP_SHELL = [
   './ZBE_CRE.html',
   './manifest.json',
@@ -23,6 +23,13 @@ const APP_SHELL = [
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
   self.skipWaiting();
+});
+
+// La pàgina envia 'skipWaiting' quan l'usuari toca "Actualitza" al bàner de
+// versió nova: fa que aquest worker prengui el relleu sense esperar que es
+// tanquin totes les pestanyes.
+self.addEventListener('message', (event) => {
+  if (event.data === 'skipWaiting') self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {

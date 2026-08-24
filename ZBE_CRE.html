@@ -71,6 +71,11 @@
     header h1 { font-size: 15px; }
   }
 
+  .update-banner { display: none; align-items: center; justify-content: center; gap: 12px; background: #1a73e8; color: #fff; padding: 10px 16px; font-size: 14px; position: sticky; top: 0; z-index: 100000; }
+  .update-banner.show { display: flex; }
+  .update-banner button { width: auto; padding: 6px 14px; font-size: 14px; background: #fff; color: #1a73e8; }
+  .app-version { margin-top: 10px; font-size: 12px; color: #888; }
+
   .onboarding-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 99999; display: none; align-items: center; justify-content: center; padding: 20px; }
   .onboarding-overlay.show { display: flex; }
   .onboarding-card { background: #fff; border-radius: 12px; padding: 22px 24px; max-width: 440px; width: 100%; max-height: 85vh; overflow-y: auto; }
@@ -92,6 +97,11 @@
     <div class="brand">CRE</div>
   </div>
 </header>
+
+<div id="updateBanner" class="update-banner">
+  <span>Hi ha una versió nova de l'app.</span>
+  <button type="button" id="updateBtn">Actualitza</button>
+</div>
 
 <div id="onboarding" class="onboarding-overlay">
   <div class="onboarding-card">
@@ -165,6 +175,7 @@
         <p><b>Ruta que evita la ZBE:</b> per a cada ruta candidata es mesura quants metres queden <b>dins</b> del perímetre (mostreig cada 25 m), no només si el toca. Primer es miren les alternatives que ofereix OSRM; si totes hi entren i tant l'origen com el destí són fora, es demanen fins a 8 rutes més fent-les passar per punts de pas situats fora del perímetre, i es tria la més ràpida que no hi entri gens. Un marge de 250 m evita comptar com a "entrada" el fet de resseguir la vora. Si l'origen o el destí són dins la zona, no es busca res: cap ruta ho pot evitar.</p>
         <p><b>Apartar la ruta de les càmeres:</b> un cop triada la ruta, si passa a menys de 40 m d'algun punt de càmera conegut, s'agafa el punt més enganxat al traçat, es calcula la perpendicular a la ruta allà i es demanen rutes que passin per punts situats a 150, 300 i 550 m a banda i banda. Es repeteix fins a 3 vegades mentre vagi baixant el nombre de punts a prop, descartant desviaments de més del 80% del temps original. És un desviament local, d'un carrer o dos, no una volta sencera.</p>
         <p><b>Fins on arriba això:</b> els 131 punts surten d'un mapa comunitari, no d'una font oficial — cap administració publica on són les càmeres. L'app només pot evitar els punts <i>coneguts</i>, i per això mai diu "ruta sense càmeres". A més, un cop dins la ZBE la sanció no depèn de passar per una càmera concreta. Si el que vols és no cometre la infracció, el que compta és l'etiqueta ambiental o una autorització, no el traçat.</p>
+        <p class="app-version">Versió de l'app: <b id="appVersion"></b>. Si aquest número no canvia després d'una actualització, l'app t'està servint una còpia guardada: tanca-la del tot i torna-la a obrir amb connexió.</p>
         <p>Rutes amb <a href="https://project-osrm.org/" target="_blank">OSRM</a> (servidor públic de demo) sobre dades d'OpenStreetMap. Geocodificació amb <a href="https://nominatim.org/" target="_blank">Nominatim</a>. El botó 📍 de geolocalització només funciona servit per HTTPS o des de <code>localhost</code>.</p>
       </div>
     </details>
@@ -1765,11 +1776,54 @@ Promise.all([loadZBE(), loadCameras()])
   .then(() => { calcBtn.disabled = false; setStatus(''); })
   .catch((e) => setStatus('Error carregant dades: ' + e.message));
 
+// Versió de l'app. Puja-la a cada canvi visible, juntament amb CACHE_NAME de
+// sw.js. Es mostra a "Llegenda i dades" perquè, quan una cosa no funciona com
+// s'espera, es pugui saber d'un cop d'ull si el que s'està executant és la
+// versió nova o una còpia guardada del service worker.
+const APP_VERSION = '2026-08-24 · v5';
+document.getElementById('appVersion').textContent = APP_VERSION;
+
 // Registre del service worker: només té sentit servit per http(s)/localhost;
 // obrint el fitxer directament (file://) simplement no es registra i l'app
 // segueix funcionant igual, sense mode fora de línia.
+//
+// Instal·lada com a PWA, l'app es pot obrir des de la icona sense que el
+// navegador arribi a demanar l'HTML: llavors es queda amb la versió que ja
+// tenia, encara que al servidor n'hi hagi una de nova. Per això aquí es
+// comprova activament si hi ha actualització i s'avisa amb un bàner.
+const updateBanner = document.getElementById('updateBanner');
+const updateBtn = document.getElementById('updateBtn');
+
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.register('sw.js').then((reg) => {
+    const avisa = () => updateBanner.classList.add('show');
+
+    if (reg.waiting && navigator.serviceWorker.controller) avisa();
+    reg.addEventListener('updatefound', () => {
+      const nou = reg.installing;
+      if (!nou) return;
+      nou.addEventListener('statechange', () => {
+        // controller != null vol dir que ja hi havia una versió instal·lada:
+        // això és una actualització, no la primera instal·lació.
+        if (nou.state === 'installed' && navigator.serviceWorker.controller) avisa();
+      });
+    });
+
+    // En tornar a l'app (canvi de pestanya o obrir-la des de la icona) es
+    // torna a preguntar al servidor si hi ha una versió nova.
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) reg.update().catch(() => {});
+    });
+  }).catch(() => {});
+
+  updateBtn.addEventListener('click', () => {
+    updateBtn.disabled = true;
+    updateBtn.textContent = 'Actualitzant...';
+    navigator.serviceWorker.getRegistration()
+      .then((reg) => (reg && reg.waiting ? reg.waiting.postMessage('skipWaiting') : null))
+      .catch(() => {})
+      .then(() => setTimeout(() => location.reload(), 300));
+  });
 }
 
 // Pantalla d'explicació la primera vegada que s'obre l'app (i sempre
