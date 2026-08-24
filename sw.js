@@ -9,7 +9,7 @@
 // només s'usa com a reserva quan no hi ha connexió. Puja CACHE_NAME (v2, v3...)
 // si mai cal forçar que tothom refresqui la caché de cop.
 
-const CACHE_NAME = 'zbe-cre-v6';
+const CACHE_NAME = 'zbe-cre-v7';
 const APP_SHELL = [
   './ZBE_CRE.html',
   './manifest.json',
