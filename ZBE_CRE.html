@@ -1467,6 +1467,20 @@ const CAM_MARGE_TEMPS_S = 300;
 // Un punt de càmera a tocar de l'origen o del destí no es pot esquivar amb un
 // desviament: la ruta hi ha de començar o acabar igualment.
 const CAM_EXTREM_M = 150;
+// Les càmeres de la ZBE es posen als accessos i als nusos, i sovint n'hi ha
+// tres o quatre a pocs metres (a Pl. de les Drassanes, per exemple, n'hi ha
+// tres separades entre 84 i 193 m). Esquivar-les d'una en una no serveix de
+// res: apartar-se de la primera et deixa al costat de la segona. Per això les
+// que estan a prop les unes de les altres es tracten com un sol obstacle i el
+// desviament es dimensiona per superar el grup sencer.
+const CAM_GRUP_M = 250;
+const CAM_GRUP_MAX = 12;
+const CAM_GRUP_RADI_MAX_M = 600;
+// Els punts de pas es posen abans i després del grup, de manera que la ruta
+// hagi de recórrer el carrer alternatiu i no pugui tornar a la via de la
+// càmera just abans o just després del punt de pas.
+const CAM_SEPARACIO_VIES_M = 250;
+const CAM_MAX_CONSULTES = 18;
 
 function vecMeters(from, to) {
   const cosLat = Math.cos(((from[1] + to[1]) / 2) * GRAU);
@@ -1500,6 +1514,46 @@ function perpendicularAway(coords, i, cam) {
   return perp;
 }
 
+// Agrupació per enllaç simple sobre TOTA la llista de càmeres, no només les
+// que ja són a prop de la ruta: una càmera a 200 m del traçat no compta ara
+// mateix, però és justament on aniria a parar un desviament petit.
+function cameraGroup(cam, totes) {
+  const grup = [cam];
+  const jaHiEs = (c) => grup.some((g) => g.lat === c.lat && g.lon === c.lon);
+  let canvi = true;
+  while (canvi && grup.length < CAM_GRUP_MAX) {
+    canvi = false;
+    for (const c of totes) {
+      if (jaHiEs(c)) continue;
+      if (grup.some((g) => metersBetween([g.lon, g.lat], [c.lon, c.lat]) <= CAM_GRUP_M)) {
+        grup.push(c);
+        canvi = true;
+        if (grup.length >= CAM_GRUP_MAX) break;
+      }
+    }
+  }
+  let sx = 0, sy = 0;
+  for (const c of grup) { sx += c.lon; sy += c.lat; }
+  const centre = [sx / grup.length, sy / grup.length];
+  let radi = 0;
+  for (const c of grup) radi = Math.max(radi, metersBetween(centre, [c.lon, c.lat]));
+  return { grup, centre, radi: Math.min(radi, CAM_GRUP_RADI_MAX_M) };
+}
+
+// Índex del punt de la ruta que queda a "meters" de coords[i], caminant en el
+// sentit "dir". Torna si s'ha arribat a recórrer aquesta distància o si abans
+// s'ha acabat la ruta.
+function indexAtDistance(coords, i, meters, dir) {
+  let acc = 0, j = i;
+  for (;;) {
+    const k = j + dir;
+    if (k < 0 || k >= coords.length) return { index: j, assolit: false };
+    acc += metersBetween(coords[j], coords[k]);
+    j = k;
+    if (acc >= meters) return { index: j, assolit: true };
+  }
+}
+
 function cameraAtEndpoint(cam, a, b) {
   const p = [cam.lon, cam.lat];
   return metersBetween(p, [a.lon, a.lat]) <= CAM_EXTREM_M
@@ -1512,6 +1566,7 @@ function cameraAtEndpoint(cam, a, b) {
 async function findRouteAvoidingCameras(a, b, start, onProgress) {
   let current = start;
   let intentat = false;
+  let consultes = 0;
   const inevitables = [];
 
   for (let iter = 0; iter < CAM_MAX_ITERACIONS; iter++) {
@@ -1525,22 +1580,36 @@ async function findRouteAvoidingCameras(a, b, start, onProgress) {
     if (!objectiu) break;
 
     const coords = current.geometry.coordinates;
-    const camPt = [objectiu.lon, objectiu.lat];
-    const i = nearestIndex(coords, camPt);
-    const perp = perpendicularAway(coords, i, camPt);
+    const { centre, radi } = cameraGroup(objectiu, cameras);
+    const i = nearestIndex(coords, centre);
+    const perp = perpendicularAway(coords, i, centre);
 
-    // Totes dues bandes a cada distància: sovint el carrer paral·lel útil
-    // només existeix en un dels dos costats.
+    // Punts de pas abans i després del grup, quan hi ha prou ruta a banda i
+    // banda; si el grup cau massa a prop d'un extrem, un de sol.
+    const abans = indexAtDistance(coords, i, CAM_SEPARACIO_VIES_M, -1);
+    const despres = indexAtDistance(coords, i, CAM_SEPARACIO_VIES_M, 1);
+    const parella = abans.assolit && despres.assolit;
+
+    // El desplaçament es mesura des de la vora del grup, no des del centre,
+    // perquè superi totes les càmeres que en formen part. Totes dues bandes:
+    // el carrer alternatiu útil sovint només existeix en un dels dos costats.
     const vies = [];
-    for (const d of CAM_DESPLACAMENTS_M) {
-      vies.push(offsetByMeters(coords[i], perp[0] * d, perp[1] * d));
-      vies.push(offsetByMeters(coords[i], -perp[0] * d, -perp[1] * d));
+    for (const extra of CAM_DESPLACAMENTS_M) {
+      const dist = radi + extra;
+      for (const signe of [1, -1]) {
+        const dx = perp[0] * dist * signe, dy = perp[1] * dist * signe;
+        vies.push(parella
+          ? [offsetByMeters(coords[abans.index], dx, dy), offsetByMeters(coords[despres.index], dx, dy)]
+          : [offsetByMeters(coords[i], dx, dy)]);
+      }
     }
 
+    if (consultes + vies.length > CAM_MAX_CONSULTES) break;
+    consultes += vies.length;
     intentat = true;
     if (onProgress) onProgress(iter + 1, CAM_MAX_ITERACIONS);
     const results = await Promise.all(vies.map((v) =>
-      osrmRoute([a, { lon: v[0], lat: v[1] }, b]).catch(() => null)
+      osrmRoute([a, ...v.map((p) => ({ lon: p[0], lat: p[1] })), b]).catch(() => null)
     ));
 
     const maxDurada = Math.max(start.duration * CAM_MAX_FACTOR_VOLTA, start.duration + CAM_MARGE_TEMPS_S);
@@ -1829,7 +1898,7 @@ Promise.all([loadZBE(), loadCameras()])
 // sw.js. Es mostra a "Llegenda i dades" perquè, quan una cosa no funciona com
 // s'espera, es pugui saber d'un cop d'ull si el que s'està executant és la
 // versió nova o una còpia guardada del service worker.
-const APP_VERSION = '2026-08-24 · v6';
+const APP_VERSION = '2026-08-24 · v7';
 document.getElementById('appVersion').textContent = APP_VERSION;
 
 // Registre del service worker: només té sentit servit per http(s)/localhost;
