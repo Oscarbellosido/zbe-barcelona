@@ -45,6 +45,12 @@
   .result-box.safe { background: #e6f4ea; border: 1px solid #34a853; color: #1e4620; }
   .result-box.warn { background: #fdecea; border: 1px solid #d93025; color: #611a15; }
   .result-box b { display: block; margin-bottom: 4px; }
+  #routeNote { margin-top: 10px; }
+  .route-cost { display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: #333; background: #f4f5f7; border: 1px solid #e0e3e8; border-radius: 6px; padding: 8px 10px; }
+  .route-cost-extra { color: #666; font-size: 12px; }
+  .camera-note { margin: 6px 0 0; font-size: 12px; color: #666; }
+  .camera-note.camera-ok { color: #1e4620; font-weight: 600; }
+  .camera-dist { color: #888; font-size: 12px; }
   #cameraList { margin-top: 8px; font-size: 13px; }
   #cameraList ul { margin: 4px 0 0; padding-left: 18px; }
   .disclaimer { font-size: 12px; color: #666; line-height: 1.5; }
@@ -79,7 +85,7 @@
 <header>
   <div>
     <h1>Ruta vs. Zona de Baixes Emissions (ZBE) de Barcelona</h1>
-    <p>Comprova si una ruta creua el perímetre de la ZBE i si passa a prop de punts de càmera coneguts.</p>
+    <p>Comprova si una ruta creua el perímetre de la ZBE i, si hi entra, busca una ruta que no hi entri.</p>
   </div>
   <div style="display:flex; align-items:center; gap:10px;">
     <button type="button" id="helpBtn" title="Com funciona l'app" style="width:auto; padding:4px 10px; font-size:14px; font-weight:700; background:#33383f;">?</button>
@@ -93,7 +99,10 @@
     <ol>
       <li>Escriu una adreça d'<b>origen</b> i de <b>destí</b> (o toca 📍 per fer servir la teva ubicació actual).</li>
       <li>"<b>Calcula ruta</b>" traça el trajecte i comprova si creua el perímetre oficial de la <b>ZBE</b>.</li>
-      <li>Els punts <b style="color:#f9ab00">taronja</b> són càmeres de control conegudes (font comunitària, no oficial). Si la ruta hi passa a prop, t'ho avisa.</li>
+      <li>Si la ruta ràpida hi entra, l'app <b>busca una ruta que no entri gens a la ZBE</b> fent-la passar per fora del perímetre, i et diu quant temps i quilòmetres hi perds. La ruta ràpida queda dibuixada en <b style="color:#8a9099">gris</b> per comparar.</li>
+      <li>Si l'origen o el destí ja són <b>dins</b> la zona, no hi ha ruta que ho eviti: el que compta és l'etiqueta ambiental del vehicle, no per on passis.</li>
+      <li>Els punts <b style="color:#f9ab00">taronja</b> són càmeres de control conegudes (font comunitària, no oficial). Si la ruta en passa arran, l'app prova d'<b>apartar-la un o dos carrers</b> i t'avisa amb 🔀 de quantes n'ha evitat.</li>
+      <li>Compte: la llista de càmeres <b>no és oficial ni completa</b>. Que no en quedi cap a prop de la ruta no garanteix que no en passis cap.</li>
       <li>Pots <b>actualitzar les càmeres en directe</b> o <b>exportar-les a KML</b> per importar-les a Google My Maps i veure-les des de l'app de Google Maps.</li>
       <li>Recorda: les dades de càmeres no són oficials — serveixen d'orientació, no de garantia. El que sí és fiable és si la ruta entra dins el perímetre de la ZBE.</li>
     </ol>
@@ -119,6 +128,7 @@
     <div class="card" id="result">
       <h2>Resultat</h2>
       <div id="resultBox" class="result-box"></div>
+      <div id="routeNote"></div>
       <div id="cameraList"></div>
     </div>
 
@@ -145,13 +155,16 @@
       <summary>Llegenda i dades</summary>
       <div class="legend">
         <span><i class="swatch" style="background:#d93025"></i> Perímetre ZBE (oficial)</span>
-        <span><i class="swatch" style="background:#1a73e8"></i> Ruta calculada</span>
+        <span><i class="swatch" style="background:#1a73e8"></i> Ruta proposada</span>
+        <span><i class="swatch" style="background:#8a9099"></i> Ruta ràpida (entra a la ZBE)</span>
         <span><i class="swatch" style="background:#f9ab00"></i> Punt de càmera conegut</span>
       </div>
       <div class="disclaimer" style="margin-top:12px">
         <p><b>Perímetre de la ZBE:</b> font oficial, Àrea Metropolitana de Barcelona (IDEAMB), servei <code>zona_baixes_emissions</code>. Fiable i actualitzat.</p>
         <p><b>Punts de càmera (taronja):</b> ni l'Ajuntament ni l'AMB publiquen les coordenades exactes de les càmeres. Els 131 punts venen d'un mapa comunitari de Google My Maps mantingut per <a href="https://zbe-barcelona.com/faqs/mapa-camaras-zbe/" target="_blank">zbe-barcelona.com</a> — vegeu <code>build-cameras.js</code>. <b>No és una llista oficial</b>: pot faltar-hi algun punt, estar desplaçat respecte al pal exacte, o haver canviat. El que sí és fiable és si la ruta <b>entra dins el perímetre</b>, perquè la detecció real funciona en qualsevol punt d'accés o interior.</p>
-        <p><b>Ruta alternativa per evitar càmeres:</b> si OSRM ofereix alguna alternativa raonable, es tria la que passi a prop de menys càmeres conegudes (i s'avisa amb 🔀). No està garantit: si totes les alternatives passen per càmeres, o no n'hi ha cap de disponible, es manté la ruta habitual amb l'avís de càmeres properes.</p>
+        <p><b>Ruta que evita la ZBE:</b> per a cada ruta candidata es mesura quants metres queden <b>dins</b> del perímetre (mostreig cada 25 m), no només si el toca. Primer es miren les alternatives que ofereix OSRM; si totes hi entren i tant l'origen com el destí són fora, es demanen fins a 8 rutes més fent-les passar per punts de pas situats fora del perímetre, i es tria la més ràpida que no hi entri gens. Un marge de 250 m evita comptar com a "entrada" el fet de resseguir la vora. Si l'origen o el destí són dins la zona, no es busca res: cap ruta ho pot evitar.</p>
+        <p><b>Apartar la ruta de les càmeres:</b> un cop triada la ruta, si passa a menys de 40 m d'algun punt de càmera conegut, s'agafa el punt més enganxat al traçat, es calcula la perpendicular a la ruta allà i es demanen rutes que passin per punts situats a 150, 300 i 550 m a banda i banda. Es repeteix fins a 3 vegades mentre vagi baixant el nombre de punts a prop, descartant desviaments de més del 80% del temps original. És un desviament local, d'un carrer o dos, no una volta sencera.</p>
+        <p><b>Fins on arriba això:</b> els 131 punts surten d'un mapa comunitari, no d'una font oficial — cap administració publica on són les càmeres. L'app només pot evitar els punts <i>coneguts</i>, i per això mai diu "ruta sense càmeres". A més, un cop dins la ZBE la sanció no depèn de passar per una càmera concreta. Si el que vols és no cometre la infracció, el que compta és l'etiqueta ambiental o una autorització, no el traçat.</p>
         <p>Rutes amb <a href="https://project-osrm.org/" target="_blank">OSRM</a> (servidor públic de demo) sobre dades d'OpenStreetMap. Geocodificació amb <a href="https://nominatim.org/" target="_blank">Nominatim</a>. El botó 📍 de geolocalització només funciona servit per HTTPS o des de <code>localhost</code>.</p>
       </div>
     </details>
@@ -969,6 +982,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let zbePolygon = null;   // turf/geojson polygon feature
 let routeLayer = null;
+let fastRouteLayer = null; // ruta ràpida dibuixada en gris quan en mostrem una altra
 let cameraLayerGroup = L.layerGroup().addTo(map);
 let cameras = [];
 let originOverride = null; // {lat, lon, label} quan es fa servir geolocalització
@@ -976,6 +990,7 @@ let originOverride = null; // {lat, lon, label} quan es fa servir geolocalitzaci
 const statusEl = document.getElementById('status');
 const resultCard = document.getElementById('result');
 const resultBox = document.getElementById('resultBox');
+const routeNoteEl = document.getElementById('routeNote');
 const cameraListEl = document.getElementById('cameraList');
 const calcBtn = document.getElementById('calcBtn');
 const geoBtn = document.getElementById('geoBtn');
@@ -994,9 +1009,151 @@ function setStatus(msg) { statusEl.textContent = msg; }
 async function loadZBE() {
   const data = window.EMBEDDED_ZBE || await (await fetch('zbe_ambit.geojson')).json();
   zbePolygon = data.features[0];
+  setZbeGeometry(zbePolygon.geometry);
   L.geoJSON(data, {
     style: { color: '#d93025', weight: 2, fillColor: '#d93025', fillOpacity: 0.08, dashArray: '4 4' }
   }).addTo(map);
+}
+
+// ---------------------------------------------------------------------------
+// Geometria de la ZBE
+//
+// La pregunta útil no és "la ruta toca el polígon?" (sí/no) sinó "quants
+// metres de la ruta queden DINS la ZBE?". Amb una xifra en comptes d'un
+// booleà podem (a) dir-ho clar a l'usuari ("entra 4,2 km dins la zona") i
+// (b) puntuar rutes candidates per quedar-nos amb la que no hi entra gens,
+// que és l'única manera real d'evitar una sanció: dins la ZBE et poden
+// multar en qualsevol punt, passis o no per una càmera concreta.
+// ---------------------------------------------------------------------------
+
+let zbeRings = [];       // [anell exterior, forats...], coordenades [lon, lat]
+let zbeCentroid = null;
+
+// Resseguir el perímetre per fora (o un error de digitalització d'uns metres)
+// no és "entrar a la ZBE": per sota d'aquest llindar considerem que la ruta
+// només vorareja la vora.
+const ZBE_TOLERANCIA_M = 250;
+const MOSTREIG_M = 25;   // pas de mostreig al llarg de la ruta
+
+const RADI_TERRA_M = 6371008.8;
+const GRAU = Math.PI / 180;
+
+function setZbeGeometry(geom) {
+  zbeRings = geom.type === 'MultiPolygon' ? geom.coordinates.flat() : geom.coordinates;
+  const outer = zbeRings[0];
+  let sx = 0, sy = 0;
+  for (let i = 0; i < outer.length - 1; i++) { sx += outer[i][0]; sy += outer[i][1]; }
+  zbeCentroid = [sx / (outer.length - 1), sy / (outer.length - 1)];
+}
+
+// Ray casting sobre un anell. Ho fem a mà en comptes de cridar turf perquè
+// aquesta funció s'executa desenes de milers de vegades (mostreig dens de
+// cada ruta candidata) i així evitem construir un Feature per cada punt.
+function ringContains(ring, lon, lat) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+    if ((yi > lat) !== (yj > lat) && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+function pointInZBE(lon, lat) {
+  if (!zbeRings.length || !ringContains(zbeRings[0], lon, lat)) return false;
+  for (let i = 1; i < zbeRings.length; i++) if (ringContains(zbeRings[i], lon, lat)) return false;
+  return true;
+}
+
+// Distància plana amb correcció de longitud per la latitud: a l'escala de
+// l'àrea metropolitana l'error respecte a la haversine és irrellevant i és
+// molt més barata de calcular.
+function metersBetween(a, b) {
+  const lat = ((a[1] + b[1]) / 2) * GRAU;
+  const dx = (b[0] - a[0]) * GRAU * Math.cos(lat) * RADI_TERRA_M;
+  const dy = (b[1] - a[1]) * GRAU * RADI_TERRA_M;
+  return Math.hypot(dx, dy);
+}
+
+// Recorre la ruta a passos de ~25 m i suma els trams que cauen dins la ZBE.
+// Compta també quantes vegades hi entra (transicions fora → dins), que és el
+// que l'usuari percep com "creuar el perímetre".
+function zbeExposure(coords) {
+  let meters = 0, entries = 0, wasInside = null;
+  for (let i = 0; i < coords.length - 1; i++) {
+    const a = coords[i], b = coords[i + 1];
+    const segLen = metersBetween(a, b);
+    const steps = Math.max(1, Math.ceil(segLen / MOSTREIG_M));
+    for (let s = 0; s < steps; s++) {
+      const t = (s + 0.5) / steps;
+      const ins = pointInZBE(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t);
+      if (ins) {
+        meters += segLen / steps;
+        if (wasInside !== true) entries++;
+      }
+      wasInside = ins;
+    }
+  }
+  return { meters, entries };
+}
+
+function distToZbeBoundary(lon, lat) {
+  let best = Infinity;
+  const cosLat = Math.cos(lat * GRAU);
+  for (const ring of zbeRings) {
+    for (let i = 0; i < ring.length - 1; i++) {
+      const ax = (ring[i][0] - lon) * GRAU * cosLat * RADI_TERRA_M;
+      const ay = (ring[i][1] - lat) * GRAU * RADI_TERRA_M;
+      const bx = (ring[i + 1][0] - lon) * GRAU * cosLat * RADI_TERRA_M;
+      const by = (ring[i + 1][1] - lat) * GRAU * RADI_TERRA_M;
+      const vx = bx - ax, vy = by - ay, len2 = vx * vx + vy * vy;
+      let t = len2 ? -(ax * vx + ay * vy) / len2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      const d = Math.hypot(ax + t * vx, ay + t * vy);
+      if (d < best) best = d;
+    }
+  }
+  return best;
+}
+
+// Punts de pas ("ancoratges") repartits tot al voltant de la ZBE i per fora
+// del perímetre. Serveixen per demanar a OSRM rutes que facin la volta a la
+// zona: origen → ancoratge → destí. No cal que siguin bons a priori — un
+// ancoratge que caigui al mar o enmig del no-res es descarta després, quan
+// mirem a quina distància ha hagut d'enganxar-lo OSRM a una carretera i si
+// la ruta resultant realment no entra a la ZBE.
+const ANCORATGES_PER_ANELL = 28;
+const ANCORATGES_MARGES_M = [700, 2200];
+let zbeAnchorsCache = null;
+
+function pushOutward(vertex, meters) {
+  const cosLat = Math.cos(vertex[1] * GRAU);
+  let dx = (vertex[0] - zbeCentroid[0]) * cosLat, dy = vertex[1] - zbeCentroid[1];
+  const n = Math.hypot(dx, dy) || 1;
+  return [
+    vertex[0] + ((dx / n) * meters) / (RADI_TERRA_M * GRAU * cosLat),
+    vertex[1] + ((dy / n) * meters) / (RADI_TERRA_M * GRAU),
+  ];
+}
+
+function zbeAnchors() {
+  if (zbeAnchorsCache) return zbeAnchorsCache;
+  const outer = zbeRings[0];
+  const anchors = [];
+  for (const margin of ANCORATGES_MARGES_M) {
+    for (let k = 0; k < ANCORATGES_PER_ANELL; k++) {
+      const vertex = outer[Math.floor((k * (outer.length - 1)) / ANCORATGES_PER_ANELL)];
+      let p = pushOutward(vertex, margin);
+      // En els entrants del perímetre, desplaçar-se en línia recta des del
+      // centre pot deixar el punt encara dins (o massa arran): en aquest cas
+      // s'empeny bastant més enfora.
+      if (pointInZBE(p[0], p[1]) || distToZbeBoundary(p[0], p[1]) < margin * 0.5) {
+        p = pushOutward(vertex, margin * 2.2);
+      }
+      if (!pointInZBE(p[0], p[1]) && distToZbeBoundary(p[0], p[1]) >= 300) anchors.push(p);
+    }
+  }
+  zbeAnchorsCache = anchors;
+  return anchors;
 }
 
 const cameraIcon = L.divIcon({
@@ -1167,77 +1324,280 @@ async function geocode(query) {
   return { lat: parseFloat(best.lat), lon: parseFloat(best.lon), label: best.display_name, exact };
 }
 
-// Demanem alternatives a OSRM perquè, si n'hi ha, puguem triar la que passi
-// a prop de menys càmeres conegudes en lloc de la primera per defecte.
-async function route(a, b) {
-  const url = `https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson&alternatives=true`;
+// ---------------------------------------------------------------------------
+// Rutes
+// ---------------------------------------------------------------------------
+
+// Consulta a OSRM. `points` és la llista de punts pels quals ha de passar la
+// ruta (origen, ancoratges opcionals, destí). continue_straight=false evita
+// que un punt de pas forci un canvi de sentit absurd just en arribar-hi.
+async function osrmRoute(points, { alternatives = false } = {}) {
+  const coords = points.map((p) => `${p.lon},${p.lat}`).join(';');
+  const url = `https://router.project-osrm.org/route/v1/driving/${coords}`
+    + `?overview=full&geometries=geojson&continue_straight=false`
+    + (alternatives ? '&alternatives=true' : '');
   const res = await fetch(url);
   const data = await res.json();
-  if (data.code !== 'Ok') throw new Error('No s\'ha pogut calcular la ruta');
-  return data.routes; // array de {geometry, distance, duration, ...}, ordenat per recomanació d'OSRM
+  if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
+    throw new Error('No s\'ha pogut calcular la ruta');
+  }
+  return data; // {routes: [...], waypoints: [...]}
 }
 
+const CAMERA_RADI_M = 40;
+
+// Punts de càmera coneguts a menys de CAMERA_RADI_M de la ruta, ordenats de
+// més a prop a més lluny. El pre-filtre pel requadre de la ruta evita fer el
+// càlcul exacte per als 131 punts a cada ruta candidata (se n'avaluen unes
+// quantes desenes per trajecte).
 function nearCamerasFor(routeGeom) {
-  const routeLine = turf.feature(routeGeom);
-  return cameras.filter(c => {
-    const d = turf.pointToLineDistance(turf.point([c.lon, c.lat]), routeLine, { units: 'meters' });
-    return d <= 40;
-  });
-}
-
-// D'entre totes les rutes que ha tornat OSRM (la recomanada + alternatives,
-// si n'hi ha), tria la que passi a prop de menys càmeres conegudes. Si totes
-// en tenen les mateixes (o no hi ha alternatives), es queda amb la primera.
-function pickRouteAvoidingCameras(routes) {
-  const evaluated = routes.map((r) => ({ geometry: r.geometry, nearCameras: nearCamerasFor(r.geometry) }));
-  const primary = evaluated[0];
-  let chosen = primary;
-  for (const r of evaluated.slice(1)) {
-    if (r.nearCameras.length < chosen.nearCameras.length) chosen = r;
-  }
-  return { chosen, avoidedCount: primary.nearCameras.length - chosen.nearCameras.length, usedAlternative: chosen !== primary };
-}
-
-function checkRoute(routeGeom, nearCameras) {
-  const routeLine = turf.feature(routeGeom);
   const coords = routeGeom.coordinates;
-  const startInside = turf.booleanPointInPolygon(turf.point(coords[0]), zbePolygon);
-  const endInside = turf.booleanPointInPolygon(turf.point(coords[coords.length - 1]), zbePolygon);
-
-  const intersects = turf.booleanIntersects(routeLine, zbePolygon);
-
-  let crossings = 0;
-  if (intersects) {
-    try {
-      const polyLine = turf.polygonToLine(zbePolygon);
-      crossings = turf.lineIntersect(routeLine, polyLine).features.length;
-    } catch (e) { /* ignore, keep crossings 0 */ }
+  let minLon = Infinity, minLat = Infinity, maxLon = -Infinity, maxLat = -Infinity;
+  for (const [lon, lat] of coords) {
+    if (lon < minLon) minLon = lon;
+    if (lon > maxLon) maxLon = lon;
+    if (lat < minLat) minLat = lat;
+    if (lat > maxLat) maxLat = lat;
   }
+  const marge = CAMERA_RADI_M / (RADI_TERRA_M * GRAU); // graus de latitud
+  const margeLon = marge / Math.max(0.1, Math.cos(((minLat + maxLat) / 2) * GRAU));
 
-  return { intersects, crossings, startInside, endInside, nearCameras };
+  const routeLine = turf.feature(routeGeom);
+  const aprop = [];
+  for (const c of cameras) {
+    if (c.lon < minLon - margeLon || c.lon > maxLon + margeLon) continue;
+    if (c.lat < minLat - marge || c.lat > maxLat + marge) continue;
+    const d = turf.pointToLineDistance(turf.point([c.lon, c.lat]), routeLine, { units: 'meters' });
+    if (d <= CAMERA_RADI_M) aprop.push(Object.assign({}, c, { dist: d }));
+  }
+  return aprop.sort((x, y) => x.dist - y.dist);
 }
 
-function renderResult({ intersects, crossings, startInside, endInside, nearCameras }) {
-  resultCard.classList.add('ok');
+// Empaqueta una ruta d'OSRM amb tot el que necessitem per comparar-la amb les
+// altres: metres dins la ZBE, vegades que hi entra i càmeres conegudes a prop.
+function evaluateRoute(osrmRoute) {
+  const geometry = osrmRoute.geometry;
+  const zbe = zbeExposure(geometry.coordinates);
+  return {
+    geometry,
+    distance: osrmRoute.distance,
+    duration: osrmRoute.duration,
+    zbe,
+    avoidsZbe: zbe.meters <= ZBE_TOLERANCIA_M,
+    nearCameras: nearCamerasFor(geometry),
+  };
+}
 
-  if (!intersects) {
-    resultBox.className = 'result-box safe';
-    resultBox.innerHTML = `<b>✔ La ruta no entra a la ZBE</b>No es creua el perímetre oficial de la Zona de Baixes Emissions.`;
-  } else if (startInside && endInside && crossings === 0) {
-    resultBox.className = 'result-box warn';
-    resultBox.innerHTML = `<b>⚠ Tot el trajecte és dins la ZBE</b>Origen i destí ja són dins la zona restringida: el trajecte no en surt en cap moment.`;
-  } else {
-    const n = crossings > 0 ? crossings : 1;
-    resultBox.className = 'result-box warn';
-    resultBox.innerHTML = `<b>⚠ La ruta entra a la ZBE</b>Creua el perímetre oficial ${n} ${n === 1 ? 'vegada' : 'vegades'}. Si el vehicle no té l'etiqueta ambiental requerida, pot ser sancionat en qualsevol punt de dins la zona.`;
+const MAX_ANCORATGES = 8;      // consultes extra màximes a OSRM (servidor públic de demo)
+const ANCORATGES_PER_TANDA = 4;
+const MAX_ENGANXADA_M = 2000;  // si OSRM ha d'enganxar el punt de pas tan lluny, no era carretera
+const MAX_FACTOR_VOLTA = 3;    // descarta voltes de més del triple de temps
+
+// Busca una ruta que no entri gens a la ZBE fent-la passar per punts de pas
+// exteriors al perímetre. Els ancoratges es proven en tandes, ordenats pel
+// tomb que suposen en línia recta, i ens quedem amb la millor de la primera
+// tanda que doni algun resultat net: així la volta acostuma a ser la més
+// curta possible sense castigar el servidor públic d'OSRM amb 56 consultes.
+async function findRouteAvoidingZBE(a, b, fastest, onProgress) {
+  const from = [a.lon, a.lat], to = [b.lon, b.lat];
+  const direct = metersBetween(from, to);
+  const candidates = zbeAnchors()
+    .map((p) => ({ p, cost: metersBetween(from, p) + metersBetween(p, to) - direct }))
+    .sort((x, y) => x.cost - y.cost);
+
+  // Ancoratges veïns donen pràcticament la mateixa ruta: ens quedem amb un
+  // de cada zona per no gastar consultes en duplicats.
+  const picked = [];
+  for (const c of candidates) {
+    if (picked.length >= MAX_ANCORATGES) break;
+    if (picked.some((q) => metersBetween(q.p, c.p) < 1200)) continue;
+    picked.push(c);
   }
 
-  if (nearCameras.length) {
-    cameraListEl.innerHTML = `<b>Punts de càmera coneguts a prop de la ruta (&le;40m):</b><ul>${nearCameras.map(c => `<li>${c.name}</li>`).join('')}</ul>`;
+  for (let i = 0; i < picked.length; i += ANCORATGES_PER_TANDA) {
+    const tanda = picked.slice(i, i + ANCORATGES_PER_TANDA);
+    if (onProgress) onProgress(Math.min(i + tanda.length, picked.length), picked.length);
+    const results = await Promise.all(tanda.map((c) =>
+      osrmRoute([a, { lon: c.p[0], lat: c.p[1] }, b]).catch(() => null)
+    ));
+    let best = null;
+    for (const data of results) {
+      if (!data) continue;
+      // Ancoratge al mar o enmig del no-res: OSRM l'ha hagut d'enganxar molt
+      // lluny i la ruta que en surt no té res a veure amb el que demanàvem.
+      if ((data.waypoints || []).some((w) => w.distance > MAX_ENGANXADA_M)) continue;
+      const r = evaluateRoute(data.routes[0]);
+      if (!r.avoidsZbe) continue;
+      if (r.duration > fastest.duration * MAX_FACTOR_VOLTA) continue;
+      if (!best || r.duration < best.duration) best = r;
+    }
+    if (best) return best;
+  }
+  return null;
+}
+
+// Apartar la ruta dels punts de càmera coneguts.
+//
+// A diferència de la volta per fora de la ZBE (que és un rodeig global al
+// voltant d'un polígon gran), aquí el desviament és local: n'hi ha prou de
+// desplaçar la ruta un o dos carrers al costat del punt on passa arran d'una
+// càmera. Per a cada iteració s'agafa la càmera més enganxada al traçat, es
+// calcula la perpendicular a la ruta en aquell punt i es demanen rutes que
+// passin per punts situats a banda i banda. Es repeteix mentre vagi baixant
+// el nombre de punts coneguts a prop.
+const CAM_MAX_ITERACIONS = 3;
+const CAM_DESPLACAMENTS_M = [150, 300, 550];
+const CAM_MAX_FACTOR_VOLTA = 1.8;   // un desviament de càmera ha de ser local
+const CAM_MARGE_ZBE_M = 500;        // no acceptis més ZBE a canvi de menys càmeres
+const CAM_MAX_ENGANXADA_M = 400;
+
+function vecMeters(from, to) {
+  const cosLat = Math.cos(((from[1] + to[1]) / 2) * GRAU);
+  return [(to[0] - from[0]) * GRAU * cosLat * RADI_TERRA_M, (to[1] - from[1]) * GRAU * RADI_TERRA_M];
+}
+
+function offsetByMeters(p, dx, dy) {
+  const cosLat = Math.cos(p[1] * GRAU);
+  return [p[0] + dx / (RADI_TERRA_M * GRAU * cosLat), p[1] + dy / (RADI_TERRA_M * GRAU)];
+}
+
+function nearestIndex(coords, point) {
+  let best = 0, bestD = Infinity;
+  for (let i = 0; i < coords.length; i++) {
+    const d = metersBetween(coords[i], point);
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  return best;
+}
+
+// Vector unitari perpendicular al traçat a coords[i], apuntant cap al costat
+// contrari d'on hi ha la càmera.
+function perpendicularAway(coords, i, cam) {
+  const p0 = coords[Math.max(0, i - 1)];
+  const p1 = coords[Math.min(coords.length - 1, i + 1)];
+  const dir = vecMeters(p0, p1);
+  const n = Math.hypot(dir[0], dir[1]) || 1;
+  let perp = [-dir[1] / n, dir[0] / n];
+  const towardsCam = vecMeters(coords[i], cam);
+  if (perp[0] * towardsCam[0] + perp[1] * towardsCam[1] > 0) perp = [-perp[0], -perp[1]];
+  return perp;
+}
+
+async function findRouteAvoidingCameras(a, b, start, onProgress) {
+  let current = start;
+  for (let iter = 0; iter < CAM_MAX_ITERACIONS; iter++) {
+    if (!current.nearCameras.length) break;
+    const coords = current.geometry.coordinates;
+    const cam = current.nearCameras[0];           // la més enganxada al traçat
+    const camPt = [cam.lon, cam.lat];
+    const i = nearestIndex(coords, camPt);
+    const perp = perpendicularAway(coords, i, camPt);
+
+    const vies = CAM_DESPLACAMENTS_M.map((d) => offsetByMeters(coords[i], perp[0] * d, perp[1] * d));
+    // I un al costat contrari, per si en aquella banda no hi ha carrer.
+    vies.push(offsetByMeters(coords[i], -perp[0] * 300, -perp[1] * 300));
+
+    if (onProgress) onProgress(iter + 1, CAM_MAX_ITERACIONS);
+    const results = await Promise.all(vies.map((v) =>
+      osrmRoute([a, { lon: v[0], lat: v[1] }, b]).catch(() => null)
+    ));
+
+    let millor = null;
+    for (const data of results) {
+      if (!data) continue;
+      if ((data.waypoints || []).some((w) => w.distance > CAM_MAX_ENGANXADA_M)) continue;
+      const r = evaluateRoute(data.routes[0]);
+      if (r.duration > start.duration * CAM_MAX_FACTOR_VOLTA) continue;
+      if (r.zbe.meters > start.zbe.meters + CAM_MARGE_ZBE_M) continue;
+      if (r.nearCameras.length >= current.nearCameras.length) continue;
+      const guanya = !millor
+        || r.nearCameras.length < millor.nearCameras.length
+        || (r.nearCameras.length === millor.nearCameras.length && r.duration < millor.duration);
+      if (guanya) millor = r;
+    }
+    if (!millor) break;
+    current = millor;
+  }
+  return current === start ? null : current;
+}
+
+// ---------------------------------------------------------------------------
+// Presentació del resultat
+// ---------------------------------------------------------------------------
+
+function formatKm(meters) {
+  return meters >= 10000
+    ? `${Math.round(meters / 1000)} km`
+    : `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
+}
+
+function formatMinutes(seconds) {
+  const min = Math.round(seconds / 60);
+  if (min < 60) return `${min} min`;
+  return `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')} min`;
+}
+
+// Diferència de temps i distància respecte a la ruta ràpida. No sempre és
+// positiva: de tant en tant la volta per fora del perímetre acaba sent més
+// curta que la diagonal per dins la ciutat, i llavors s'ha de dir així.
+function formatDelta(chosen, fastest) {
+  const dt = chosen.duration - fastest.duration;
+  const dd = chosen.distance - fastest.distance;
+  const temps = Math.abs(dt) < 60 ? 'el mateix temps' : `${dt > 0 ? '+' : '−'}${formatMinutes(Math.abs(dt))}`;
+  const dist = Math.abs(dd) < 300 ? 'la mateixa distància' : `${dd > 0 ? '+' : '−'}${formatKm(Math.abs(dd))}`;
+  return `${temps} i ${dist} respecte a la ruta ràpida (en gris al mapa)`;
+}
+
+function renderResult({ mode, chosen, fastest, originInside, destInside, camerasAvoided = 0 }) {
+  resultCard.classList.add('ok');
+  routeNoteEl.innerHTML = '';
+
+  if (mode === 'clean-natural') {
+    resultBox.className = 'result-box safe';
+    resultBox.innerHTML = '<b>✔ La ruta no entra a la ZBE</b>No es creua el perímetre oficial de la Zona de Baixes Emissions.';
+    routeNoteEl.innerHTML = `<div class="route-cost"><span><b>Ruta:</b> ${formatKm(chosen.distance)} · ${formatMinutes(chosen.duration)}</span></div>`;
+  } else if (mode === 'clean-detour') {
+    resultBox.className = 'result-box safe';
+    resultBox.innerHTML = '<b>✔ Ruta trobada que no entra a la ZBE</b>'
+      + `S'ha fet passar la ruta per fora del perímetre. La ruta ràpida hi entrava ${formatKm(fastest.zbe.meters)}.`;
+    routeNoteEl.innerHTML = `<div class="route-cost">`
+      + `<span><b>Ruta sense ZBE:</b> ${formatKm(chosen.distance)} · ${formatMinutes(chosen.duration)}</span>`
+      + `<span class="route-cost-extra">${formatDelta(chosen, fastest)}</span>`
+      + `</div>`;
+  } else if (mode === 'endpoint-inside') {
+    const quin = originInside && destInside ? 'L\'origen i el destí són'
+      : originInside ? 'L\'origen és' : 'El destí és';
+    resultBox.className = 'result-box warn';
+    resultBox.innerHTML = '<b>⚠ Aquest trajecte no es pot fer sense entrar a la ZBE</b>'
+      + `${quin} dins la zona restringida, així que cap ruta ho evita. `
+      + 'Dins la ZBE es pot sancionar en qualsevol punt: el que compta és l\'etiqueta ambiental del vehicle, no per on passis.';
   } else {
-    cameraListEl.innerHTML = cameras.length
-      ? '<i>Cap punt de càmera conegut a prop de la ruta.</i>'
-      : '<i>No hi ha punts de càmera carregats.</i>';
+    resultBox.className = 'result-box warn';
+    resultBox.innerHTML = '<b>⚠ La ruta entra a la ZBE</b>'
+      + `Hi entra ${chosen.zbe.entries === 1 ? 'una vegada' : chosen.zbe.entries + ' vegades'} `
+      + `i hi circula ${formatKm(chosen.zbe.meters)}. No s'ha trobat cap volta raonable per fora del perímetre. `
+      + 'Si el vehicle no té l\'etiqueta ambiental requerida, pot ser sancionat en qualsevol punt de dins la zona.';
+    routeNoteEl.innerHTML = `<div class="route-cost"><span><b>Ruta:</b> ${formatKm(chosen.distance)} · ${formatMinutes(chosen.duration)}</span></div>`;
+  }
+
+  // Sobre les càmeres: la llista NO és oficial ni completa (cap administració
+  // publica on són), així que l'app només pot parlar de "punts coneguts". Que
+  // no en quedi cap a prop no vol dir que no hi hagi càmeres, i el text ho ha
+  // de dir sempre que doni un resultat net, per no donar seguretat falsa.
+  const avis = `<p class="camera-note">La llista de ${cameras.length} punts no és oficial ni completa: cap administració publica on són les càmeres. Que no n'hi hagi cap de conegut a prop no garanteix que no en passis cap.</p>`;
+  const apartada = camerasAvoided > 0
+    ? `<p class="camera-note camera-ok">🔀 S'ha apartat la ruta de ${camerasAvoided} ${camerasAvoided === 1 ? 'punt de càmera conegut' : 'punts de càmera coneguts'}.</p>`
+    : '';
+
+  if (chosen.nearCameras.length) {
+    cameraListEl.innerHTML = apartada
+      + `<b>Punts de càmera coneguts que queden a prop de la ruta (&le;${CAMERA_RADI_M} m):</b>`
+      + `<ul>${chosen.nearCameras.map(c => `<li>${c.name} <span class="camera-dist">a ${Math.round(c.dist)} m</span></li>`).join('')}</ul>`
+      + avis;
+  } else {
+    cameraListEl.innerHTML = apartada
+      + `<b>Cap punt de càmera conegut a prop de la ruta.</b>`
+      + avis;
   }
 }
 
@@ -1296,6 +1656,44 @@ geoBtn.addEventListener('click', () => {
 
 originInput.addEventListener('input', () => { originOverride = null; });
 
+function drawRoutes(chosen, fastest) {
+  if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+  if (fastRouteLayer) { map.removeLayer(fastRouteLayer); fastRouteLayer = null; }
+
+  // Quan la ruta que proposem no és la ràpida, dibuixem també la ràpida en
+  // gris discontinu perquè es vegi d'un cop d'ull quina volta s'està fent.
+  if (fastest && fastest !== chosen) {
+    fastRouteLayer = L.geoJSON(fastest.geometry, {
+      style: { color: '#8a9099', weight: 4, opacity: 0.75, dashArray: '6 6' }
+    }).addTo(map);
+  }
+  routeLayer = L.geoJSON(chosen.geometry, { style: { color: '#1a73e8', weight: 5, opacity: 0.9 } }).addTo(map);
+
+  const bounds = routeLayer.getBounds();
+  if (fastRouteLayer) bounds.extend(fastRouteLayer.getBounds());
+  // maxZoom evita que en rutes curtes el mapa s'apropi tant que els punts
+  // de càmera propers (però no tocant la ruta) quedin fora de la vista.
+  map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+  // Les icones de càmera ja es dibuixen a la markerPane, per damunt de la
+  // línia de ruta (a l'overlayPane), sense necessitat de bringToFront.
+}
+
+function shortLabel(label) {
+  const parts = String(label).split(',').map((s) => s.trim()).filter(Boolean);
+  if (!parts.length) return label;
+  if (/^\d+[a-zA-Z]?$/.test(parts[0]) && parts[1]) return `${parts[1]}, ${parts[0]}`;
+  return parts[0];
+}
+
+function geocodeWarning(a, b) {
+  if (a.exact === false && b.exact === false) {
+    return ' ⚠ OpenStreetMap no té el número exacte ni per a l\'origen ni per al destí: els punts marquen només el carrer.';
+  }
+  if (a.exact === false) return ' ⚠ OpenStreetMap no té el número exacte per a l\'origen: el punt marca només el carrer.';
+  if (b.exact === false) return ' ⚠ OpenStreetMap no té el número exacte per al destí: el punt marca només el carrer.';
+  return '';
+}
+
 calcBtn.addEventListener('click', async () => {
   const originQ = originInput.value.trim();
   const destQ = destInput.value.trim();
@@ -1312,37 +1710,48 @@ calcBtn.addEventListener('click', async () => {
     ]);
 
     setStatus('Calculant ruta...');
-    const routes = await route(a, b);
-    const { chosen, avoidedCount, usedAlternative } = pickRouteAvoidingCameras(routes);
-    const geom = chosen.geometry;
+    const base = await osrmRoute([a, b], { alternatives: true });
+    const evaluated = base.routes.map(evaluateRoute);
+    const fastest = evaluated[0];
 
-    if (routeLayer) map.removeLayer(routeLayer);
-    routeLayer = L.geoJSON(geom, { style: { color: '#1a73e8', weight: 5, opacity: 0.85 } }).addTo(map);
-    // maxZoom evita que en rutes curtes el mapa s'apropi tant que els punts
-    // de càmera propers (però no tocant la ruta) quedin fora de la vista.
-    map.fitBounds(routeLayer.getBounds(), { padding: [40, 40], maxZoom: 15 });
-    // Les icones de càmera ja es dibuixen a la markerPane, per damunt de la
-    // línia de ruta (a l'overlayPane), sense necessitat de bringToFront.
+    const originInside = pointInZBE(a.lon, a.lat);
+    const destInside = pointInZBE(b.lon, b.lat);
 
-    const result = checkRoute(geom, chosen.nearCameras);
-    renderResult(result);
-    let msg = `Origen: ${a.label.split(',')[0]} → Destí: ${b.label.split(',')[0]}`;
-    if (a.exact === false && b.exact === false) {
-      msg += ' ⚠ OpenStreetMap no té el número exacte ni per a l\'origen ni per al destí: els punts marquen només el carrer.';
-    } else if (a.exact === false) {
-      msg += ' ⚠ OpenStreetMap no té el número exacte per a l\'origen: el punt marca només el carrer.';
-    } else if (b.exact === false) {
-      msg += ' ⚠ OpenStreetMap no té el número exacte per al destí: el punt marca només el carrer.';
+    // Prioritat 1: alguna de les rutes que OSRM ja proposa no entra a la ZBE.
+    let chosen = evaluated.find((r) => r.avoidsZbe) || null;
+    let mode = chosen ? (chosen === fastest ? 'clean-natural' : 'clean-detour') : null;
+
+    // Prioritat 2: si cap no ho evita i els extrems són fora, busquem una
+    // volta pel perímetre. Si un extrem és dins, no hi ha res a buscar.
+    if (!chosen && !originInside && !destInside) {
+      const detour = await findRouteAvoidingZBE(a, b, fastest, (done, total) => {
+        setStatus(`Buscant una ruta que no entri a la ZBE... (${done}/${total})`);
+      });
+      if (detour) { chosen = detour; mode = 'clean-detour'; }
     }
-    if (usedAlternative && avoidedCount > 0) {
-      const camWord = avoidedCount === 1 ? 'càmera coneguda' : 'càmeres conegudes';
-      msg += ` 🔀 S'ha triat una ruta alternativa per evitar ${avoidedCount} ${camWord}.`;
-    } else if (chosen.nearCameras.length > 0) {
-      msg += routes.length > 1
-        ? ' ℹ Totes les alternatives disponibles passen a prop d\'alguna càmera coneguda: no s\'ha pogut evitar-les.'
-        : ' ℹ El motor de rutes (OSRM) no ofereix cap alternativa per a aquest trajecte.';
+
+    if (!chosen) {
+      chosen = fastest;
+      mode = (originInside || destInside) ? 'endpoint-inside' : 'no-alternative';
     }
-    setStatus(msg);
+
+    // Prioritat 3: sobre la ruta ja triada, mirar d'apartar-la dels punts de
+    // càmera coneguts. Serveix tant si la ruta entra a la ZBE com si no.
+    let camerasAvoided = 0;
+    if (chosen.nearCameras.length) {
+      const abans = chosen.nearCameras.length;
+      const apartada = await findRouteAvoidingCameras(a, b, chosen, (i, t) => {
+        setStatus(`Apartant la ruta dels punts de càmera coneguts... (${i}/${t})`);
+      });
+      if (apartada) {
+        camerasAvoided = abans - apartada.nearCameras.length;
+        chosen = apartada;
+      }
+    }
+
+    drawRoutes(chosen, fastest);
+    renderResult({ mode, chosen, fastest, originInside, destInside, camerasAvoided });
+    setStatus(`Origen: ${shortLabel(a.label)} → Destí: ${shortLabel(b.label)}` + geocodeWarning(a, b));
   } catch (err) {
     setStatus('Error: ' + err.message);
   } finally {

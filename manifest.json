@@ -1,7 +1,7 @@
 {
   "name": "Ruta ZBE Barcelona (CRE)",
   "short_name": "ZBE CRE",
-  "description": "Comprova si una ruta creua la Zona de Baixes Emissions de Barcelona i si passa a prop de càmeres conegudes.",
+  "description": "Comprova si una ruta creua la Zona de Baixes Emissions de Barcelona i, si hi entra, busca una ruta alternativa que no hi entri.",
   "start_url": "./ZBE_CRE.html",
   "scope": "./",
   "display": "standalone",
