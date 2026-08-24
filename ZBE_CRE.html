@@ -1559,6 +1559,13 @@ function drawRoutes(chosen, fastest) {
   // línia de ruta (a l'overlayPane), sense necessitat de bringToFront.
 }
 
+function shortLabel(label) {
+  const parts = String(label).split(',').map((s) => s.trim()).filter(Boolean);
+  if (!parts.length) return label;
+  if (/^\d+[a-zA-Z]?$/.test(parts[0]) && parts[1]) return `${parts[1]}, ${parts[0]}`;
+  return parts[0];
+}
+
 function geocodeWarning(a, b) {
   if (a.exact === false && b.exact === false) {
     return ' ⚠ OpenStreetMap no té el número exacte ni per a l\'origen ni per al destí: els punts marquen només el carrer.';
@@ -1611,7 +1618,7 @@ calcBtn.addEventListener('click', async () => {
 
     drawRoutes(chosen, fastest);
     renderResult({ mode, chosen, fastest, originInside, destInside });
-    setStatus(`Origen: ${a.label.split(',')[0]} → Destí: ${b.label.split(',')[0]}` + geocodeWarning(a, b));
+    setStatus(`Origen: ${shortLabel(a.label)} → Destí: ${shortLabel(b.label)}` + geocodeWarning(a, b));
   } catch (err) {
     setStatus('Error: ' + err.message);
   } finally {
