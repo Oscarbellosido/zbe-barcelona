@@ -991,7 +991,7 @@ window.EMBEDDED_CAMERAS = {
 // Mentre estigui buit, s'usa el mètode antic (desviaments amb OSRM), així que
 // res es trenca abans de desplegar el Worker. Es pot fixar també des de fora
 // amb window.CAMERA_AVOID_ENDPOINT (útil per a proves).
-const CAMERA_AVOID_ENDPOINT = (typeof window !== 'undefined' && window.CAMERA_AVOID_ENDPOINT) || '';
+const CAMERA_AVOID_ENDPOINT = (typeof window !== 'undefined' && window.CAMERA_AVOID_ENDPOINT) || 'https://zbe-routing.oscarbellosido.workers.dev';
 // Radi del cercle que es prohibeix al voltant de cada càmera. Una mica menys
 // que el llindar de "a prop" (40 m) perquè la ruta resultant en quedi fora.
 const CAMERA_AVOID_RADI_M = 35;
