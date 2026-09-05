@@ -110,6 +110,7 @@
       <li>Escriu una adreça d'<b>origen</b> i de <b>destí</b> (o toca 📍 per fer servir la teva ubicació actual).</li>
       <li>"<b>Calcula ruta</b>" traça el trajecte i comprova si creua el perímetre oficial de la <b>ZBE</b>.</li>
       <li>Si la ruta ràpida hi entra, l'app <b>busca una ruta que no entri gens a la ZBE</b> fent-la passar per fora del perímetre, i et diu quant temps i quilòmetres hi perds. La ruta ràpida queda dibuixada en <b style="color:#8a9099">gris</b> per comparar.</li>
+      <li>Si hi ha configurat el servei de rutes amb zones prohibides (vegeu <code>cloudflare-worker/</code>), l'app calcula una ruta que <b>evita de debò</b> els punts de càmera coneguts, encara que allargui el trajecte.</li>
       <li>Si l'origen o el destí ja són <b>dins</b> la zona, no hi ha ruta que ho eviti: el que compta és l'etiqueta ambiental del vehicle, no per on passis.</li>
       <li>Els punts <b style="color:#f9ab00">taronja</b> són càmeres de control conegudes (font comunitària, no oficial). Si la ruta en passa arran, l'app prova d'<b>apartar-la un o dos carrers</b> i t'avisa amb 🔀 de quantes n'ha evitat.</li>
       <li>Compte: la llista de càmeres <b>no és oficial ni completa</b>. Que no en quedi cap a prop de la ruta no garanteix que no en passis cap.</li>
@@ -173,7 +174,7 @@
         <p><b>Perímetre de la ZBE:</b> font oficial, Àrea Metropolitana de Barcelona (IDEAMB), servei <code>zona_baixes_emissions</code>. Fiable i actualitzat.</p>
         <p><b>Punts de càmera (taronja):</b> ni l'Ajuntament ni l'AMB publiquen les coordenades exactes de les càmeres. Els 131 punts venen d'un mapa comunitari de Google My Maps mantingut per <a href="https://zbe-barcelona.com/faqs/mapa-camaras-zbe/" target="_blank">zbe-barcelona.com</a> — vegeu <code>build-cameras.js</code>. <b>No és una llista oficial</b>: pot faltar-hi algun punt, estar desplaçat respecte al pal exacte, o haver canviat. El que sí és fiable és si la ruta <b>entra dins el perímetre</b>, perquè la detecció real funciona en qualsevol punt d'accés o interior.</p>
         <p><b>Ruta que evita la ZBE:</b> per a cada ruta candidata es mesura quants metres queden <b>dins</b> del perímetre (mostreig cada 25 m), no només si el toca. Primer es miren les alternatives que ofereix OSRM; si totes hi entren i tant l'origen com el destí són fora, es demanen fins a 8 rutes més fent-les passar per punts de pas situats fora del perímetre, i es tria la més ràpida que no hi entri gens. Un marge de 250 m evita comptar com a "entrada" el fet de resseguir la vora. Si l'origen o el destí són dins la zona, no es busca res: cap ruta ho pot evitar.</p>
-        <p><b>Apartar la ruta de les càmeres:</b> un cop triada la ruta, si passa a menys de 40 m d'algun punt de càmera conegut, s'agafa el punt més enganxat al traçat, es calcula la perpendicular a la ruta allà i es demanen rutes que passin per punts situats a 150, 300 i 550 m a banda i banda. Es repeteix fins a 3 vegades mentre vagi baixant el nombre de punts a prop, descartant desviaments de més del 80% del temps original. És un desviament local, d'un carrer o dos, no una volta sencera.</p>
+        <p><b>Apartar la ruta de les càmeres:</b> si hi ha un servei de rutes amb zones prohibides configurat (openrouteservice, vegeu <code>cloudflare-worker/</code>), es demana una ruta que <b>eviti de debò</b> cada punt de càmera conegut, sense límit de temps: val més allargar el trajecte que passar per una càmera. Si aquest servei no està configurat, es fa servir un mètode de reserva amb OSRM que només prova desviaments locals i no ho garanteix. En tots dos casos, les càmeres a tocar de l'origen o del destí no es poden evitar: la ruta hi ha de començar o acabar.</p>
         <p><b>Fins on arriba això:</b> els 131 punts surten d'un mapa comunitari, no d'una font oficial — cap administració publica on són les càmeres. L'app només pot evitar els punts <i>coneguts</i>, i per això mai diu "ruta sense càmeres". A més, un cop dins la ZBE la sanció no depèn de passar per una càmera concreta. Si el que vols és no cometre la infracció, el que compta és l'etiqueta ambiental o una autorització, no el traçat.</p>
         <p class="app-version">Versió de l'app: <b id="appVersion"></b>. Si aquest número no canvia després d'una actualització, l'app t'està servint una còpia guardada: tanca-la del tot i torna-la a obrir amb connexió.</p>
         <p>Rutes amb <a href="https://project-osrm.org/" target="_blank">OSRM</a> (servidor públic de demo) sobre dades d'OpenStreetMap. Geocodificació amb <a href="https://nominatim.org/" target="_blank">Nominatim</a>. El botó 📍 de geolocalització només funciona servit per HTTPS o des de <code>localhost</code>.</p>
@@ -985,6 +986,19 @@ window.EMBEDDED_CAMERAS = {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 <script>
+// Worker de Cloudflare que calcula rutes evitant de debò els punts de càmera
+// (openrouteservice + avoid_polygons). Vegeu cloudflare-worker/README.md.
+// Mentre estigui buit, s'usa el mètode antic (desviaments amb OSRM), així que
+// res es trenca abans de desplegar el Worker. Es pot fixar també des de fora
+// amb window.CAMERA_AVOID_ENDPOINT (útil per a proves).
+const CAMERA_AVOID_ENDPOINT = (typeof window !== 'undefined' && window.CAMERA_AVOID_ENDPOINT) || '';
+// Radi del cercle que es prohibeix al voltant de cada càmera. Una mica menys
+// que el llindar de "a prop" (40 m) perquè la ruta resultant en quedi fora.
+const CAMERA_AVOID_RADI_M = 35;
+// Amplada del corredor al voltant de la recta origen-destí dins la qual es
+// tenen en compte les càmeres a evitar (prou ampli per a voltes generoses).
+const CAMERA_AVOID_CORREDOR_M = 5000;
+
 const map = L.map('map').setView([41.3874, 2.1686], 12);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors',
@@ -1560,6 +1574,68 @@ function cameraAtEndpoint(cam, a, b) {
       || metersBetween(p, [b.lon, b.lat]) <= CAM_EXTREM_M;
 }
 
+// Ruta que evita de debò els punts de càmera coneguts, via el Worker
+// (openrouteservice amb avoid_polygons). A diferència dels desviaments amb
+// OSRM, aquí les zones queden PROHIBIDES: si ORS torna una ruta, no passa per
+// cap de les càmeres que li hem donat (tret de les que són a tocar de
+// l'origen/destí, que no li passem perquè si no ORS no trobaria cap sortida).
+//
+// Torna { route, intentat, inevitables, error } amb la mateixa forma que
+// findRouteAvoidingCameras, perquè el gestor les pugui tractar igual.
+async function routeAvoidingCamerasORS(a, b, start) {
+  // Només s'envien a ORS les càmeres del corredor del trajecte (fins a
+  // CAMERA_AVOID_CORREDOR_M de la recta origen-destí). Enviar-les totes (131)
+  // infla la petició d'avoid_polygons i pot topar amb els límits d'ORS; les
+  // que queden lluny del camí no caldria evitar-les de tota manera.
+  const segment = turf.lineString([[a.lon, a.lat], [b.lon, b.lat]]);
+  const evitables = [], inevitables = [];
+  for (const c of cameras) {
+    if (cameraAtEndpoint(c, a, b)) {
+      if (!inevitables.some((x) => x.name === c.name)) inevitables.push(c);
+      continue;
+    }
+    const d = turf.pointToLineDistance(turf.point([c.lon, c.lat]), segment, { units: 'meters' });
+    if (d <= CAMERA_AVOID_CORREDOR_M) evitables.push(c);
+  }
+  if (!evitables.length) return { route: null, intentat: false, inevitables };
+
+  let data;
+  try {
+    const res = await fetch(CAMERA_AVOID_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        start: [a.lon, a.lat],
+        end: [b.lon, b.lat],
+        avoid_circles: evitables.map((c) => [c.lon, c.lat, CAMERA_AVOID_RADI_M]),
+      }),
+    });
+    if (!res.ok) {
+      // ORS no ha trobat cap ruta possible evitant totes les càmeres, o hi ha
+      // hagut un error de servei: es reporta perquè el gestor pugui fer
+      // fallback al mètode antic o avisar.
+      return { route: null, intentat: true, inevitables, error: 'HTTP ' + res.status };
+    }
+    data = await res.json();
+  } catch (e) {
+    return { route: null, intentat: true, inevitables, error: e.message };
+  }
+
+  // Resposta GeoJSON d'ORS: la ruta és a features[0].
+  const feat = data && data.features && data.features[0];
+  const geom = feat && feat.geometry;
+  if (!geom || geom.type !== 'LineString' || !geom.coordinates || geom.coordinates.length < 2) {
+    return { route: null, intentat: true, inevitables, error: 'resposta sense ruta' };
+  }
+  const summary = (feat.properties && feat.properties.summary) || {};
+  const route = evaluateRoute({
+    geometry: geom,
+    distance: summary.distance || 0,
+    duration: summary.duration || 0,
+  });
+  return { route, intentat: true, inevitables };
+}
+
 // Torna { route, intentat, inevitables }: la ruta millorada (o null si no
 // n'hi ha), si s'ha arribat a provar cap desviament, i els punts de càmera
 // que són a tocar de l'origen o del destí i que per tant no es poden evitar.
@@ -1863,18 +1939,39 @@ calcBtn.addEventListener('click', async () => {
       mode = (originInside || destInside) ? 'endpoint-inside' : 'no-alternative';
     }
 
-    // Prioritat 3: sobre la ruta ja triada, mirar d'apartar-la dels punts de
-    // càmera coneguts. Serveix tant si la ruta entra a la ZBE com si no.
+    // Prioritat 3: apartar la ruta dels punts de càmera coneguts. Si el Worker
+    // (openrouteservice) està configurat, s'hi demana una ruta que EVITI de
+    // debò les càmeres; si no, o si ORS no en troba cap, es fa servir el
+    // mètode antic de desviaments amb OSRM.
     let camerasAvoided = 0;
     let cameraSearch = { intentat: false, inevitables: [] };
     if (chosen.nearCameras.length) {
       const abans = chosen.nearCameras.length;
-      cameraSearch = await findRouteAvoidingCameras(a, b, chosen, (i, t) => {
-        setStatus(`Apartant la ruta dels punts de càmera coneguts... (${i}/${t})`);
-      });
-      if (cameraSearch.route) {
-        camerasAvoided = abans - cameraSearch.route.nearCameras.length;
-        chosen = cameraSearch.route;
+      if (CAMERA_AVOID_ENDPOINT) {
+        setStatus('Buscant una ruta que eviti els punts de càmera coneguts...');
+        const ors = await routeAvoidingCamerasORS(a, b, chosen);
+        if (ors.route && ors.route.nearCameras.length < abans) {
+          camerasAvoided = abans - ors.route.nearCameras.length;
+          chosen = ors.route;
+          cameraSearch = { intentat: true, inevitables: ors.inevitables };
+        } else {
+          // ORS no ha millorat res (o ha fallat): es prova el mètode antic.
+          cameraSearch = await findRouteAvoidingCameras(a, b, chosen, (i, t) => {
+            setStatus(`Apartant la ruta dels punts de càmera coneguts... (${i}/${t})`);
+          });
+          if (cameraSearch.route) {
+            camerasAvoided = abans - cameraSearch.route.nearCameras.length;
+            chosen = cameraSearch.route;
+          }
+        }
+      } else {
+        cameraSearch = await findRouteAvoidingCameras(a, b, chosen, (i, t) => {
+          setStatus(`Apartant la ruta dels punts de càmera coneguts... (${i}/${t})`);
+        });
+        if (cameraSearch.route) {
+          camerasAvoided = abans - cameraSearch.route.nearCameras.length;
+          chosen = cameraSearch.route;
+        }
       }
     }
 
@@ -1898,7 +1995,7 @@ Promise.all([loadZBE(), loadCameras()])
 // sw.js. Es mostra a "Llegenda i dades" perquè, quan una cosa no funciona com
 // s'espera, es pugui saber d'un cop d'ull si el que s'està executant és la
 // versió nova o una còpia guardada del service worker.
-const APP_VERSION = '2026-08-24 · v7';
+const APP_VERSION = '2026-09-05 · v8';
 document.getElementById('appVersion').textContent = APP_VERSION;
 
 // Registre del service worker: només té sentit servit per http(s)/localhost;
