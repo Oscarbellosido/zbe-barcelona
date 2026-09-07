@@ -1,0 +1,14 @@
+# Configuració del Worker de Cloudflare que fa de proxy cap a openrouteservice.
+# Desplegament: vegeu README.md en aquesta mateixa carpeta.
+
+name = "zbe-routing"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Restringeix qui pot cridar el Worker al domini de l'app (recomanat un cop
+# desplegat). Deixa-ho comentat per permetre qualsevol origen mentre proves.
+# [vars]
+# ALLOWED_ORIGIN = "https://oscarbellosido.github.io"
+
+# La clau d'ORS NO va aquí (és un secret). Es posa amb:
+#   wrangler secret put ORS_API_KEY
