@@ -147,7 +147,7 @@
       <div id="navButtons" hidden>
         <button type="button" id="openGmaps" class="nav-btn">🗺️ Obre a Google Maps</button>
         <button type="button" id="openWaze" class="nav-btn">🚗 Obre a Waze</button>
-        <p class="nav-note">La ruta que hi veuràs és <b>aproximada</b>: Google Maps i Waze la recalculen ells. A Google Maps s'hi afegeixen punts de pas del nostre traçat perquè el segueixi al màxim; Waze només accepta el destí i triarà el seu camí.</p>
+        <p class="nav-note">La ruta que hi veuràs és <b>aproximada</b>: els navegadors la recalculen. A <b>Google Maps</b> s'hi posen punts de pas als girs del nostre traçat perquè el segueixi al màxim (té un límit de parades, així que no es pot clavar del tot). <b>Waze</b> només accepta el destí i farà la seva ruta —no es pot forçar que segueixi la nostra.</p>
       </div>
     </div>
 
@@ -1896,20 +1896,53 @@ const openWazeBtn = document.getElementById("openWaze");
 
 // Punts de pas repartits per distància al llarg del traçat. Google Maps
 // n'accepta un nombre limitat a l'enllaç, així que se'n prenen uns quants.
-const NAV_MAX_WAYPOINTS = 8;
+// Google Maps (consumidor) accepta un nombre limitat de parades a l'enllaç;
+// per damunt d'aquest topall en descarta o l'enllaç falla, així que no es pot
+// pujar sense mesura. El que rendeix més amb aquest pressupost és col·locar
+// els punts ALS GIRS, no repartits per igual: un punt enmig d'una recta no
+// obliga Google a res, però un just en una bifurcació el força a agafar el
+// carrer bo. Per això es prenen els vèrtexs on la ruta gira més fort, ben
+// separats entre ells, i si en falten es completen amb punts equidistants.
+const NAV_MAX_WAYPOINTS = 9;
+const NAV_SEGMENT_MIN_M = 15;   // ignora microsegments (soroll de la geometria)
+
 function sampleWaypoints(coords, n) {
   if (coords.length <= 2) return [];
   const acc = [0];
   for (let i = 1; i < coords.length; i++) acc.push(acc[i - 1] + metersBetween(coords[i - 1], coords[i]));
   const total = acc[acc.length - 1];
-  const out = [];
-  for (let k = 1; k <= n; k++) {
+  const minGap = Math.max(120, total / (n * 2)); // separació mínima entre punts
+
+  // Angle de gir a cada vèrtex interior (0 = recte, gran = gir tancat).
+  const turns = [];
+  for (let i = 1; i < coords.length - 1; i++) {
+    const v1 = vecMeters(coords[i - 1], coords[i]);
+    const v2 = vecMeters(coords[i], coords[i + 1]);
+    const n1 = Math.hypot(v1[0], v1[1]), n2 = Math.hypot(v2[0], v2[1]);
+    if (n1 < NAV_SEGMENT_MIN_M || n2 < NAV_SEGMENT_MIN_M) continue;
+    let cos = (v1[0] * v2[0] + v1[1] * v2[1]) / (n1 * n2);
+    cos = Math.max(-1, Math.min(1, cos));
+    turns.push({ i, ang: Math.acos(cos), d: acc[i] });
+  }
+  turns.sort((a, b) => b.ang - a.ang); // dels girs més tancats als més suaus
+
+  // Tria els girs més forts que quedin prou separats entre ells.
+  const picked = [];
+  for (const t of turns) {
+    if (picked.length >= n) break;
+    if (picked.every((p) => Math.abs(p.d - t.d) >= minGap)) picked.push(t);
+  }
+
+  // Si els girs no omplen el pressupost, completa amb punts equidistants que
+  // no caiguin a prop dels ja triats (les rectes llargues també volen un àncora).
+  for (let k = 1; k <= n && picked.length < n; k++) {
     const target = (total * k) / (n + 1);
     let i = 1;
     while (i < acc.length - 1 && acc[i] < target) i++;
-    out.push(coords[i]);
+    if (picked.every((p) => Math.abs(p.d - acc[i]) >= minGap)) picked.push({ i, d: acc[i] });
   }
-  return out;
+
+  return picked.sort((a, b) => a.d - b.d).map((p) => coords[p.i]); // en ordre de ruta
 }
 
 function updateNavButtons(route) {
@@ -2078,7 +2111,7 @@ Promise.all([loadZBE(), loadCameras()])
 // sw.js. Es mostra a "Llegenda i dades" perquè, quan una cosa no funciona com
 // s'espera, es pugui saber d'un cop d'ull si el que s'està executant és la
 // versió nova o una còpia guardada del service worker.
-const APP_VERSION = '2026-09-09 · v10';
+const APP_VERSION = '2026-09-09 · v11';
 document.getElementById('appVersion').textContent = APP_VERSION;
 
 // Registre del service worker: només té sentit servit per http(s)/localhost;
