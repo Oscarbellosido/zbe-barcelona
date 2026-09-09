@@ -146,11 +146,11 @@
     <div class="card">
       <h2>Càmeres</h2>
       <p class="disclaimer" style="margin:0 0 10px">
-        Actualitza els punts de càmera en directe des del mapa comunitari de
-        <a href="https://zbe-barcelona.com/faqs/mapa-camaras-zbe/" target="_blank">zbe-barcelona.com</a>
-        (cal connexió a internet; només afecta aquesta sessió, no el fitxer).
+        Les càmeres s'actualitzen soles en obrir l'app, des del mapa comunitari de
+        <a href="https://zbe-barcelona.com/faqs/mapa-camaras-zbe/" target="_blank">zbe-barcelona.com</a>.
+        Aquest botó les torna a actualitzar ara mateix (cal connexió; només afecta aquesta sessió).
       </p>
-      <button type="button" id="refreshCamerasBtn" style="margin-bottom:6px">🔄 Actualitza càmeres (en directe)</button>
+      <button type="button" id="refreshCamerasBtn" style="margin-bottom:6px">🔄 Actualitza càmeres ara</button>
       <div id="cameraStatus" style="font-size:13px; color:#555; min-height:18px; margin-bottom:10px"></div>
       <p class="disclaimer" style="margin:0 0 10px">
         Google no permet que una web injecti punts directament al teu Google Maps.
@@ -1251,9 +1251,15 @@ function parseCamerasKml(kml) {
 const cameraStatusEl = document.getElementById('cameraStatus');
 function setCameraStatus(msg) { cameraStatusEl.textContent = msg; }
 
-refreshCamerasBtn.addEventListener('click', async () => {
-  refreshCamerasBtn.disabled = true;
-  setCameraStatus('Actualitzant càmeres des de zbe-barcelona.com...');
+// Actualitza els punts de càmera des del mapa comunitari en directe. Es fa
+// servir tant amb el botó (auto=false: avisa de tot) com automàticament en
+// obrir l'app (auto=true: silenciós i tolerant, no molesta si no hi ha
+// connexió; es mantenen les càmeres incrustades).
+async function refreshCameras({ auto = false } = {}) {
+  if (!auto) {
+    refreshCamerasBtn.disabled = true;
+    setCameraStatus('Actualitzant càmeres des de zbe-barcelona.com...');
+  }
   try {
     const res = await fetch(`${CAMERAS_KML_URL}&_=${Date.now()}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1262,13 +1268,23 @@ refreshCamerasBtn.addEventListener('click', async () => {
     if (!points.length) throw new Error('cap punt trobat al mapa');
     cameras = points;
     renderCameras();
-    setCameraStatus(`Càmeres actualitzades: ${cameras.length} punts (${new Date().toLocaleString('ca-ES')}). Només per a aquesta sessió.`);
+    setCameraStatus(`Càmeres actualitzades: ${cameras.length} punts (${new Date().toLocaleString('ca-ES')}).`);
+    return true;
   } catch (e) {
-    setCameraStatus('Error actualitzant les càmeres: ' + e.message + ' (es mantenen les anteriors)');
+    // En mode automàtic no es crida l'atenció: l'app segueix amb les dades
+    // incrustades, que és exactament el que ja tenia.
+    if (auto) {
+      setCameraStatus(`${cameras.length} punts de càmera (dades incrustades; no s'han pogut actualitzar en directe).`);
+    } else {
+      setCameraStatus('Error actualitzant les càmeres: ' + e.message + ' (es mantenen les anteriors)');
+    }
+    return false;
   } finally {
-    refreshCamerasBtn.disabled = false;
+    if (!auto) refreshCamerasBtn.disabled = false;
   }
-});
+}
+
+refreshCamerasBtn.addEventListener('click', () => refreshCameras({ auto: false }));
 
 // Requadre de l'àrea metropolitana de Barcelona: es fa servir per acotar UNA
 // de les dues cerques (vegeu geocode), per desempatar noms que es repeteixen
@@ -1988,14 +2004,21 @@ calcBtn.addEventListener('click', async () => {
 calcBtn.disabled = true;
 setStatus('Carregant el perímetre de la ZBE i les càmeres...');
 Promise.all([loadZBE(), loadCameras()])
-  .then(() => { calcBtn.disabled = false; setStatus(''); })
+  .then(() => {
+    calcBtn.disabled = false;
+    setStatus('');
+    // Actualització automàtica de les càmeres en obrir l'app, en segon pla:
+    // l'app ja és usable amb les dades incrustades i s'actualitza tota sola
+    // quan arriben les de directe. Si no hi ha connexió, no passa res.
+    refreshCameras({ auto: true });
+  })
   .catch((e) => setStatus('Error carregant dades: ' + e.message));
 
 // Versió de l'app. Puja-la a cada canvi visible, juntament amb CACHE_NAME de
 // sw.js. Es mostra a "Llegenda i dades" perquè, quan una cosa no funciona com
 // s'espera, es pugui saber d'un cop d'ull si el que s'està executant és la
 // versió nova o una còpia guardada del service worker.
-const APP_VERSION = '2026-09-05 · v8';
+const APP_VERSION = '2026-09-09 · v9';
 document.getElementById('appVersion').textContent = APP_VERSION;
 
 // Registre del service worker: només té sentit servit per http(s)/localhost;
