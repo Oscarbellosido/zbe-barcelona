@@ -51,6 +51,9 @@
   .camera-note { margin: 6px 0 0; font-size: 12px; color: #666; }
   .camera-note.camera-ok { color: #1e4620; font-weight: 600; }
   .camera-dist { color: #888; font-size: 12px; }
+  #navButtons { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .nav-btn { width: auto; flex: 1 1 auto; padding: 10px 12px; background: #eef1f5; color: #1c1e21; border: 1px solid #c7cbd1; font-size: 14px; }
+  .nav-note { flex-basis: 100%; margin: 2px 0 0; font-size: 12px; color: #666; line-height: 1.4; }
   #cameraList { margin-top: 8px; font-size: 13px; }
   #cameraList ul { margin: 4px 0 0; padding-left: 18px; }
   .disclaimer { font-size: 12px; color: #666; line-height: 1.5; }
@@ -141,6 +144,11 @@
       <div id="resultBox" class="result-box"></div>
       <div id="routeNote"></div>
       <div id="cameraList"></div>
+      <div id="navButtons" hidden>
+        <button type="button" id="openGmaps" class="nav-btn">🗺️ Obre a Google Maps</button>
+        <button type="button" id="openWaze" class="nav-btn">🚗 Obre a Waze</button>
+        <p class="nav-note">La ruta que hi veuràs és <b>aproximada</b>: Google Maps i Waze la recalculen ells. A Google Maps s'hi afegeixen punts de pas del nostre traçat perquè el segueixi al màxim; Waze només accepta el destí i triarà el seu camí.</p>
+      </div>
     </div>
 
     <div class="card">
@@ -1876,6 +1884,56 @@ geoBtn.addEventListener('click', () => {
 
 originInput.addEventListener('input', () => { originOverride = null; });
 
+// Ruta actual per als botons "obre a...". Google Maps i Waze no accepten
+// una geometria sencera; Google Maps sí uns quants punts de pas, amb què
+// s'aproxima el nostre traçat (i, de retruc, s'esquiven la major part de
+// càmeres). Waze només accepta destí.
+let navRoute = null; // { a, b, geometry }
+
+const navButtonsEl = document.getElementById("navButtons");
+const openGmapsBtn = document.getElementById("openGmaps");
+const openWazeBtn = document.getElementById("openWaze");
+
+// Punts de pas repartits per distància al llarg del traçat. Google Maps
+// n'accepta un nombre limitat a l'enllaç, així que se'n prenen uns quants.
+const NAV_MAX_WAYPOINTS = 8;
+function sampleWaypoints(coords, n) {
+  if (coords.length <= 2) return [];
+  const acc = [0];
+  for (let i = 1; i < coords.length; i++) acc.push(acc[i - 1] + metersBetween(coords[i - 1], coords[i]));
+  const total = acc[acc.length - 1];
+  const out = [];
+  for (let k = 1; k <= n; k++) {
+    const target = (total * k) / (n + 1);
+    let i = 1;
+    while (i < acc.length - 1 && acc[i] < target) i++;
+    out.push(coords[i]);
+  }
+  return out;
+}
+
+function updateNavButtons(route) {
+  navRoute = route;
+  navButtonsEl.hidden = !route;
+}
+
+openGmapsBtn.addEventListener("click", () => {
+  if (!navRoute) return;
+  const { a, b, geometry } = navRoute;
+  const wps = sampleWaypoints(geometry.coordinates, NAV_MAX_WAYPOINTS)
+    .map((c) => `${c[1]},${c[0]}`).join("|");
+  let url = "https://www.google.com/maps/dir/?api=1"
+    + `&origin=${a.lat},${a.lon}&destination=${b.lat},${b.lon}&travelmode=driving`;
+  if (wps) url += `&waypoints=${encodeURIComponent(wps).replace(/%2C/g, ",").replace(/%7C/g, "|")}`;
+  window.open(url, "_blank");
+});
+
+openWazeBtn.addEventListener("click", () => {
+  if (!navRoute) return;
+  const { b } = navRoute;
+  window.open(`https://waze.com/ul?ll=${b.lat},${b.lon}&navigate=yes`, "_blank");
+});
+
 function drawRoutes(chosen, fastest) {
   if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
   if (fastRouteLayer) { map.removeLayer(fastRouteLayer); fastRouteLayer = null; }
@@ -1921,6 +1979,7 @@ calcBtn.addEventListener('click', async () => {
 
   calcBtn.disabled = true;
   resultCard.classList.remove('ok');
+  updateNavButtons(null);
   setStatus('Geocodificant adreces...');
 
   try {
@@ -1992,6 +2051,7 @@ calcBtn.addEventListener('click', async () => {
     }
 
     drawRoutes(chosen, fastest);
+    updateNavButtons({ a, b, geometry: chosen.geometry });
     renderResult({ mode, chosen, fastest, originInside, destInside, camerasAvoided, cameraSearch });
     setStatus(`Origen: ${shortLabel(a.label)} → Destí: ${shortLabel(b.label)}` + geocodeWarning(a, b));
   } catch (err) {
@@ -2018,7 +2078,7 @@ Promise.all([loadZBE(), loadCameras()])
 // sw.js. Es mostra a "Llegenda i dades" perquè, quan una cosa no funciona com
 // s'espera, es pugui saber d'un cop d'ull si el que s'està executant és la
 // versió nova o una còpia guardada del service worker.
-const APP_VERSION = '2026-09-09 · v9';
+const APP_VERSION = '2026-09-09 · v10';
 document.getElementById('appVersion').textContent = APP_VERSION;
 
 // Registre del service worker: només té sentit servit per http(s)/localhost;
